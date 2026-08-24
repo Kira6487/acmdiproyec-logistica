@@ -1,61 +1,95 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Logístico ACM Diproyec</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+        content="Interfaz preliminar del Sistema Logístico ACM Diproyec">
+  <title>Sistema Logístico ACM Diproyec</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
+  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
 </head>
 <body>
-<header class="site-header">
-    <div class="container header-content">
-        <p class="brand">ACM Diproyec</p>
-        <span class="status-badge">Versión preliminar</span>
-    </div>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
+<nav th:replace="~{fragments/navigation :: navigation('inicio')}"></nav>
 
-<main>
-    <section class="hero container" aria-labelledby="page-title">
-        <p class="eyebrow">Gestión de almacén</p>
+<main id="contenido-principal" tabindex="-1">
+  <section class="hero container" aria-labelledby="page-title">
+    <p class="eyebrow">Gestión de almacén</p>
+    <div class="hero-layout">
+      <div>
         <h1 id="page-title">Sistema Logístico ACM Diproyec</h1>
         <p class="hero-description">
-            Plataforma para el control de entradas, salidas y existencias del almacén.
+          Registro y consulta de entradas, salidas y existencias para la operación
+          diaria del almacén.
         </p>
-    </section>
-
-    <section class="modules container" aria-labelledby="modules-title">
-        <div class="section-heading">
-            <h2 id="modules-title">Módulos del sistema</h2>
-            <p>Esta arquitectura está preparada para incorporar las funciones logísticas.</p>
+      </div>
+      <aside id="estado" class="application-status" aria-labelledby="status-title">
+        <span class="status-indicator" aria-hidden="true"></span>
+        <div>
+          <h2 id="status-title">Aplicación disponible</h2>
+          <p>La interfaz está operativa. Los módulos de datos se habilitarán progresivamente.</p>
         </div>
+      </aside>
+    </div>
+  </section>
 
-        <div class="module-grid">
-            <article class="module-card">
-                <h3>Datos maestros</h3>
-                <p>Productos, categorías, unidades de medida y motivos.</p>
-                <span>Próximamente</span>
-            </article>
-            <article class="module-card">
-                <h3>Movimientos</h3>
-                <p>Registro controlado de entradas y salidas del almacén.</p>
-                <span>Próximamente</span>
-            </article>
-            <article class="module-card">
-                <h3>Inventario</h3>
-                <p>Consulta de existencias y disponibilidad de productos.</p>
-                <span>Próximamente</span>
-            </article>
-            <article class="module-card">
-                <h3>Reportes</h3>
-                <p>Seguimiento y análisis de la operación logística.</p>
-                <span>Próximamente</span>
-            </article>
-        </div>
-    </section>
+  <section id="accesos" class="modules container" aria-labelledby="modules-title">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">Accesos principales</p>
+        <h2 id="modules-title">Operaciones logísticas</h2>
+      </div>
+      <span class="badge badge-neutral">Versión preliminar</span>
+    </div>
+
+    <div class="module-grid">
+      <article class="card module-card module-card-entry">
+        <p class="module-card-number" aria-hidden="true">01</p>
+        <h3>Entrada de inventario</h3>
+        <p>Registro futuro de ingresos de productos al almacén.</p>
+        <span class="module-state" aria-disabled="true">Próximamente</span>
+      </article>
+
+      <article class="card module-card module-card-exit">
+        <p class="module-card-number" aria-hidden="true">02</p>
+        <h3>Salida de inventario</h3>
+        <p>Registro futuro de entregas con validación de existencias.</p>
+        <span class="module-state" aria-disabled="true">Próximamente</span>
+      </article>
+
+      <article class="card module-card">
+        <p class="module-card-number" aria-hidden="true">03</p>
+        <h3>Stock actual</h3>
+        <p>Consulta futura de cantidades disponibles por producto.</p>
+        <span class="module-state" aria-disabled="true">Próximamente</span>
+      </article>
+
+      <article class="card module-card">
+        <p class="module-card-number" aria-hidden="true">04</p>
+        <h3>Historial de movimientos</h3>
+        <p>Consulta futura de entradas, salidas y anulaciones registradas.</p>
+        <span class="module-state" aria-disabled="true">Próximamente</span>
+      </article>
+
+      <article class="card module-card">
+        <p class="module-card-number" aria-hidden="true">05</p>
+        <h3>Datos maestros</h3>
+        <p>Administración futura de productos, categorías, unidades y motivos.</p>
+        <span class="module-state" aria-disabled="true">Próximamente</span>
+      </article>
+
+      <article class="card module-card">
+        <p class="module-card-number" aria-hidden="true">06</p>
+        <h3>Reportes</h3>
+        <p>Generación futura de consultas y documentos de la operación.</p>
+        <span class="module-state" aria-disabled="true">Próximamente</span>
+      </article>
+    </div>
+  </section>
 </main>
 
-<footer class="site-footer">
-    <div class="container">Arquitectura inicial del sistema logístico</div>
-</footer>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
 </html>

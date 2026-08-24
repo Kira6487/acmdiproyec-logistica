@@ -11,7 +11,7 @@ estructura sobre la que se implementarán los módulos funcionales.
 - Spring Boot 3.5.7, Spring MVC, Thymeleaf y Actuator.
 - Spring JDBC y patrón DAO, sin JPA ni Hibernate.
 - PostgreSQL/Supabase como base de datos.
-- HTML y CSS responsivo sin frameworks JavaScript.
+- HTML, CSS mobile-first y JavaScript nativo sin frameworks frontend.
 
 ## Arquitectura MVC por capas
 
@@ -134,6 +134,30 @@ alguna variable y puede ejecutarse de forma explícita con:
 
 La prueba no inserta, modifica ni elimina información y evita incluir la URL o
 la contraseña en sus mensajes de error.
+
+## Trabajo colaborativo y calidad
+
+- `docs/GUIA_DESARROLLO_EQUIPO.md` define las responsabilidades por capa y la
+  distribución sugerida de módulos.
+- `CONTRIBUTING.md` describe el flujo futuro desde `develop`, los commits y la
+  revisión mediante pull requests.
+- `.github/workflows/ci.yml` ejecuta pruebas y empaquetado con Java 21 sin
+  conectarse a Supabase.
+- `.editorconfig` mantiene formato consistente entre los IDE del equipo.
+
+La interfaz dispone de fragmentos Thymeleaf compartidos y componentes CSS para
+formularios, tablas, mensajes y estados. Los accesos de la portada están
+deshabilitados hasta que cada módulo tenga backend y pruebas reales.
+
+## Despliegue
+
+El perfil `prod` acepta el puerto de la plataforma y mantiene ocultos los
+detalles de errores y health checks. La evaluación de Vercel y el procedimiento
+genérico para desplegar el JAR se encuentran en `docs/DESPLIEGUE.md`.
+
+Vercel no ofrece actualmente un runtime Java oficial para ejecutar esta
+aplicación Spring Boot completa. No se incluye una configuración de Vercel ni un
+runtime comunitario.
 
 ## Migraciones de Supabase
 
