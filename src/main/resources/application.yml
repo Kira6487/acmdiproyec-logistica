@@ -11,6 +11,12 @@ spring:
       minimum-idle: 1
       pool-name: LogisticaHikariPool
 
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
 management:
   endpoints:
     web:
