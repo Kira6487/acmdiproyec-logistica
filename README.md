@@ -72,7 +72,23 @@ $env:SUPABASE_DB_USER = "postgres"
 $env:SUPABASE_DB_PASSWORD = "su-secreto-local"
 ```
 
+En Linux, use valores obtenidos desde la configuración segura del proyecto:
+
+```bash
+export SUPABASE_DB_URL='jdbc:postgresql://host-ejemplo:5432/base-ejemplo?sslmode=require'
+export SUPABASE_DB_USER='usuario-ejemplo'
+read -s SUPABASE_DB_PASSWORD
+export SUPABASE_DB_PASSWORD
+```
+
+Desde el IDE, configure esas mismas tres variables en la configuración local de
+ejecución: **Environment variables** en IntelliJ IDEA o la propiedad `env` de
+un archivo local `.vscode/launch.json` en Visual Studio Code. La carpeta
+`.vscode/` está ignorada y ningún archivo con valores reales debe confirmarse.
+
 La URL debe incluir `sslmode=require` para conexiones remotas a Supabase.
+HikariCP usa inicialmente un máximo de 5 conexiones, una conexión mínima y
+tiempos acotados para conexión y validación.
 
 ## Ejecutar con Maven Wrapper
 
@@ -108,10 +124,27 @@ aplicación se consulta sin detalles sensibles en:
 http://localhost:8080/actuator/health
 ```
 
+Existe una prueba opcional de conexión que ejecuta `select 1` y comprueba acceso
+de solo lectura a las tablas esperadas. Se omite automáticamente cuando falta
+alguna variable y puede ejecutarse de forma explícita con:
+
+```bash
+./mvnw -Dtest=SupabaseConnectionIntegrationTest test
+```
+
+La prueba no inserta, modifica ni elimina información y evita incluir la URL o
+la contraseña en sus mensajes de error.
+
 ## Migraciones de Supabase
 
-La migración inicial se encuentra en `supabase/migrations/`. Para un entorno
-local controlado, inicie Supabase y aplique las migraciones con la CLI:
+Las migraciones se encuentran en `supabase/migrations/`. La migración de datos
+de prueba agrega `stock_minimo`, registra 11 prefabricados de concreto y crea el
+movimiento de entrada `CARGA-INICIAL-2026`. El stock de 100 unidades se obtiene
+mediante los triggers de movimiento existentes, no mediante una actualización
+aislada del inventario.
+
+Para un entorno local controlado, inicie Supabase y aplique las migraciones con
+la CLI:
 
 ```bash
 supabase start
@@ -123,10 +156,16 @@ remotos como parte de esta configuración. Tampoco modifique producción mediant
 SQL Editor cuando el cambio ya existe como migración: actualice la migración en
 desarrollo y aplíquela mediante el flujo de migraciones revisado.
 
+Después de aplicar las migraciones, ejecute las consultas de solo lectura de
+`docs/sql/validar_datos_iniciales_inventario.sql` para comprobar los 11
+productos, el stock mínimo 20, el stock actual 100 y la igualdad entre el saldo
+y el historial vigente de entradas y salidas.
+
 ## Estado actual
 
-La arquitectura por capas, la portada Thymeleaf, el manejo web básico de errores
-y la configuración por ambientes están preparados. Permanecen pendientes la
-autenticación, los datos maestros, los movimientos, el inventario y los
-reportes. Consulte [CONTRIBUTING.md](CONTRIBUTING.md) antes de desarrollar una
+La arquitectura por capas, la portada Thymeleaf, el manejo web básico de errores,
+la configuración por ambientes y los datos controlados de inventario están
+preparados. Permanecen pendientes la autenticación, los CRUD web, la operación
+de movimientos desde la interfaz, el inventario funcional y los reportes.
+Consulte [CONTRIBUTING.md](CONTRIBUTING.md) antes de desarrollar una
 funcionalidad.
