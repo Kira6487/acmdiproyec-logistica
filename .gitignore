@@ -1,0 +1,26 @@
+# Entorno y credenciales
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Maven y registros
+target/
+*.log
+logs/
+
+# IDE y sistema operativo
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Supabase local
+supabase/.temp/
