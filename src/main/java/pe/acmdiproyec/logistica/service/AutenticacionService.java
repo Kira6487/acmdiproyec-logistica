@@ -17,8 +17,12 @@ public class AutenticacionService {
 
     public Usuario buscarUsuarioActivo(String correo) {
         return usuarioDao.buscarPorCorreo(correo)
-                .filter(Usuario::isActivo)
-                .filter(usuario -> usuario.getRol() != null && usuario.getRol().isActivo())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado o inactivo"));
+                .filter(usuario -> usuario.isActivo())
+                .filter(usuario -> usuario.getRol() != null)
+                .filter(usuario -> usuario.getRol().isActivo())
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "Usuario no encontrado o inactivo"
+                        ));
     }
 }

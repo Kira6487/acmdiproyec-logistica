@@ -1,0 +1,15 @@
+pe\acmdiproyec\logistica\model\Rol.class
+pe\acmdiproyec\logistica\security\CustomUserDetailsService.class
+pe\acmdiproyec\logistica\service\UsuarioService.class
+pe\acmdiproyec\logistica\dto\UsuarioFormDto.class
+pe\acmdiproyec\logistica\controller\web\UsuarioController.class
+pe\acmdiproyec\logistica\controller\web\AuthController.class
+pe\acmdiproyec\logistica\service\AutenticacionService.class
+pe\acmdiproyec\logistica\security\SecurityConfig.class
+pe\acmdiproyec\logistica\model\Usuario.class
+pe\acmdiproyec\logistica\dto\LoginDto.class
+pe\acmdiproyec\logistica\dto\UsuarioResponseDto.class
+pe\acmdiproyec\logistica\controller\web\HomeController.class
+pe\acmdiproyec\logistica\dao\UsuarioDao.class
+pe\acmdiproyec\logistica\dao\impl\JdbcUsuarioDao.class
+pe\acmdiproyec\logistica\LogisticaApplication.class

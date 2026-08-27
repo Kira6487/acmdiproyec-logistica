@@ -45,7 +45,7 @@ public class UsuarioController {
 
     @GetMapping("/usuarios/{id}/editar")
     public String editar(@PathVariable Long id, Model model) {
-        model.addAttribute("usuario", usuarioService.obtenerFormulario(id));
+        model.addAttribute("usuario", usuarioService.buscarUsuario(id));
         model.addAttribute("roles", usuarioService.listarRolesActivos());
         return "usuarios/formulario";
     }

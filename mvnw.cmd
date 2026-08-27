@@ -17,5 +17,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBa
 IF ERRORLEVEL 1 EXIT /B 1
 
 :runMaven
-java -Dmaven.multiModuleProjectDirectory="%BASE_DIR%" -classpath "%WRAPPER_JAR%" org.apache.maven.wrapper.MavenWrapperMain %*
+java -Dmaven.multiModuleProjectDirectory="%BASE_DIR:~0,-1%" -classpath "%WRAPPER_JAR%" org.apache.maven.wrapper.MavenWrapperMain %*
 ENDLOCAL

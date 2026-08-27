@@ -12,19 +12,21 @@ import pe.acmdiproyec.logistica.service.AutenticacionService;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final AutenticacionService autenticacionService;
+	private final AutenticacionService autenticacionService;
 
-    public CustomUserDetailsService(AutenticacionService autenticacionService) {
-        this.autenticacionService = autenticacionService;
-    }
+	public CustomUserDetailsService(AutenticacionService autenticacionService) {
+		this.autenticacionService = autenticacionService;
+	}
 
-    @Override
-    public UserDetails loadUserByUsername(String correo) throws UsernameNotFoundException {
-        Usuario usuario = autenticacionService.buscarUsuarioActivo(correo);
-        return User.withUsername(usuario.getCorreo())
-                .password(usuario.getPasswordHash())
-                .roles(usuario.getRol().getCodigo())
-                .disabled(!usuario.isActivo())
-                .build();
-    }
+	@Override
+	public UserDetails loadUserByUsername(String correo)
+			throws UsernameNotFoundException {
+		Usuario usuario = autenticacionService.buscarUsuarioActivo(correo);
+
+		return User.withUsername(usuario.getCorreo())
+				.password(usuario.getPasswordHash())
+				.roles(usuario.getRol().getCodigo())
+				.disabled(!usuario.isActivo())
+				.build();
+	}
 }

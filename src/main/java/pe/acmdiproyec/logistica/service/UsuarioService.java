@@ -1,6 +1,7 @@
 package pe.acmdiproyec.logistica.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,14 +18,18 @@ public class UsuarioService {
     private final UsuarioDao usuarioDao;
     private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioDao usuarioDao, PasswordEncoder passwordEncoder) {
+    public UsuarioService(
+            UsuarioDao usuarioDao,
+            PasswordEncoder passwordEncoder) {
         this.usuarioDao = usuarioDao;
         this.passwordEncoder = passwordEncoder;
     }
 
     public void crearUsuario(Usuario usuario, String password) {
-        usuario.setPasswordHash(passwordEncoder.encode(password));
+        String passwordHash = passwordEncoder.encode(password);
+        usuario.setPasswordHash(passwordHash);
         usuario.setActivo(true);
+
         usuarioDao.guardar(usuario);
     }
 
@@ -32,6 +37,7 @@ public class UsuarioService {
         if (password != null && !password.isBlank()) {
             usuario.setPasswordHash(passwordEncoder.encode(password));
         }
+
         usuarioDao.actualizar(usuario);
     }
 
@@ -40,7 +46,9 @@ public class UsuarioService {
     }
 
     public List<UsuarioResponseDto> listarUsuarios() {
-        return usuarioDao.listarTodos().stream().map(this::convertirRespuesta).toList();
+        return usuarioDao.listarTodos().stream()
+                .map(this::convertirRespuesta)
+                .collect(Collectors.toList());
     }
 
     public Usuario buscarUsuario(Long id) {
@@ -50,19 +58,6 @@ public class UsuarioService {
 
     public List<Rol> listarRolesActivos() {
         return usuarioDao.listarRolesActivos();
-    }
-
-    public UsuarioFormDto obtenerFormulario(Long id) {
-        Usuario usuario = buscarUsuario(id);
-        UsuarioFormDto formulario = new UsuarioFormDto();
-        formulario.setIdUsuario(usuario.getIdUsuario());
-        formulario.setIdRol(usuario.getRol().getIdRol());
-        formulario.setCodigo(usuario.getCodigo());
-        formulario.setNombres(usuario.getNombres());
-        formulario.setApellidos(usuario.getApellidos());
-        formulario.setCorreo(usuario.getCorreo());
-        formulario.setActivo(usuario.isActivo());
-        return formulario;
     }
 
     public void crearDesdeFormulario(UsuarioFormDto formulario) {
