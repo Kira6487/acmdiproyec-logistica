@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/Usuarios.css}">
+    <title>Detalle de usuario | ACM Diproyec</title>
+</head>
+<body>
+    <main class="usuario-card">
+        <h1>Detalle de usuario</h1>
+        <div class="usuario-detail">
+            <p>Código: <strong th:text="${usuario.codigo}"></strong></p>
+            <p>Nombre: <strong th:text="${usuario.nombres + ' ' + usuario.apellidos}"></strong></p>
+            <p>Correo: <strong th:text="${usuario.correo}"></strong></p>
+            <p>Rol: <strong th:text="${usuario.rol.nombre}"></strong></p>
+            <p>Estado: <strong th:text="${usuario.activo ? 'Activo' : 'Inactivo'}"></strong></p>
+        </div>
+        <div class="usuario-actions">
+            <a class="usuarios-button" th:href="@{/usuarios/{id}/editar(id=${usuario.idUsuario})}">Editar</a>
+            <a class="usuarios-link" th:href="@{/usuarios}">Volver</a>
+        </div>
+    </main>
+</body>
+</html>
