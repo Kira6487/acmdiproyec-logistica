@@ -2,9 +2,17 @@ spring:
   application:
     name: acmdiproyec-logistica
   datasource:
-    url: "jdbc:postgresql://aws-0-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require"
-    username: "postgres.tqeiokeqjwwdkafsjmoi"
-    password: "Kira/6487_acm"
+    # Conexión a PostgreSQL/Supabase. La contraseña NUNCA se escribe en este
+    # archivo: se obtiene exclusivamente de la variable de entorno
+    # SUPABASE_DB_PASSWORD. El resto de parámetros admite valores
+    # predeterminados no sensibles, sobreescribibles mediante variables de entorno.
+    #
+    # Host, puerto y base de datos pueden ajustarse con SUPABASE_DB_HOST,
+    # SUPABASE_DB_PORT y SUPABASE_DB_NAME. sslmode=require se impone siempre
+    # en la URL generada: no se puede omitir por configuración.
+    url: jdbc:postgresql://${SUPABASE_DB_HOST:db.tqeiokeqjwwdkafsjmoi.supabase.co}:${SUPABASE_DB_PORT:5432}/${SUPABASE_DB_NAME:postgres}?sslmode=require
+    username: ${SUPABASE_DB_USER:postgres}
+    password: ${SUPABASE_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
