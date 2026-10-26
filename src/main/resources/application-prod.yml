@@ -1,0 +1,15 @@
+# Perfil de producción.
+# Solo contiene las diferencias respecto a application.yml. No se repiten las
+# propiedades de conexión, de HikariCP, de Actuator ni los mensajes de error
+# ya definidos en el perfil base, para evitar configuración duplicada.
+spring:
+  sql:
+    init:
+      mode: never
+  thymeleaf:
+    cache: true
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-exception: false

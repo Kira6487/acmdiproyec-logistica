@@ -20,7 +20,7 @@ public class SecurityConfig {
 	    throws Exception {
 	http
 		.authorizeHttpRequests(auth -> auth
-			.requestMatchers("/login", "/css/**", "/imagenes/**", "/images/**").permitAll()
+			.requestMatchers("/", "/login", "/css/**", "/js/**", "/img/**", "/imagenes/**", "/images/**").permitAll()
 			.requestMatchers("/usuarios/**", "/roles/**")
 			.hasAnyRole("SISTEMAS", "SISTEMA")
 			.requestMatchers("/movimientos/**")
@@ -31,7 +31,7 @@ public class SecurityConfig {
 		.formLogin(form -> form
 			.loginPage("/login")
 			.loginProcessingUrl("/login")
-			.defaultSuccessUrl("/", true)
+			.defaultSuccessUrl("/panel", true)
 			.failureUrl("/login?error=true")
 			.permitAll())
 		.logout(logout -> logout

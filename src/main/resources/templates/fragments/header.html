@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="site-header" th:fragment="header">
+  <a class="skip-link" href="#contenido-principal">Saltar al contenido</a>
+  <div class="container header-content">
+    <a class="brand" th:href="@{/}" href="/" aria-label="Ir al inicio de ACM Diproyec">
+      <span class="brand-mark" aria-hidden="true">ACM</span>
+      <span>
+        <strong>Diproyec</strong>
+        <small>Logística</small>
+      </span>
+    </a>
+    <span class="badge badge-preliminary">Versión preliminar</span>
+  </div>
+</header>
+</body>
+</html>

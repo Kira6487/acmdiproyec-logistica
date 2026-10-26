@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="site-navigation" th:fragment="navigation(seccionActiva)"
+     aria-label="Navegación principal">
+  <div class="container navigation-layout">
+    <button class="nav-toggle" type="button" aria-expanded="false"
+            aria-controls="primary-navigation" data-nav-toggle>
+      <span aria-hidden="true">☰</span>
+      <span>Menú</span>
+    </button>
+    <div id="primary-navigation" class="primary-navigation" data-navigation>
+      <a th:href="@{/}" href="/"
+         th:attr="aria-current=${seccionActiva == 'inicio'} ? 'page' : null">
+        Inicio
+      </a>
+      <a th:href="@{/#accesos}" href="/#accesos">Accesos</a>
+      <a th:href="@{/#estado}" href="/#estado">Estado</a>
+    </div>
+  </div>
+</nav>
+</body>
+</html>

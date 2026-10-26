@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="No fue posible completar la solicitud">
+  <title>No fue posible completar la solicitud</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
+  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<nav th:replace="~{fragments/navigation :: navigation('')}"></nav>
+
+<main id="contenido-principal" class="error-page container" tabindex="-1">
+  <section class="card error-card" aria-labelledby="error-title">
+    <p class="eyebrow">Sistema Logístico ACM Diproyec</p>
+    <h1 id="error-title">No fue posible completar la solicitud</h1>
+    <p>
+      Ocurrió un inconveniente inesperado. Inténtelo nuevamente más tarde o
+      regrese a la página principal.
+    </p>
+    <a class="button button-primary" th:href="@{/}" href="/">Volver al inicio</a>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>
