@@ -31,10 +31,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import pe.acmdiproyec.logistica.dao.CategoriaDao;
+import pe.acmdiproyec.logistica.dao.InventarioDao;
+import pe.acmdiproyec.logistica.dao.MotivoMovimientoDao;
+import pe.acmdiproyec.logistica.dao.MovimientoDao;
 import pe.acmdiproyec.logistica.dao.ProductoDao;
 import pe.acmdiproyec.logistica.dao.UnidadMedidaDao;
 import pe.acmdiproyec.logistica.dao.UsuarioDao;
 import pe.acmdiproyec.logistica.model.Categoria;
+import pe.acmdiproyec.logistica.model.Inventario;
+import pe.acmdiproyec.logistica.model.MotivoMovimiento;
+import pe.acmdiproyec.logistica.model.Movimiento;
 import pe.acmdiproyec.logistica.model.Producto;
 import pe.acmdiproyec.logistica.model.Rol;
 import pe.acmdiproyec.logistica.model.UnidadMedida;
@@ -72,6 +78,15 @@ class MaestrosWebTest {
 
     @MockitoBean
     private ProductoDao productoDao;
+
+    @MockitoBean
+    private MovimientoDao movimientoDao;
+
+    @MockitoBean
+    private MotivoMovimientoDao motivoMovimientoDao;
+
+    @MockitoBean
+    private InventarioDao inventarioDao;
 
     @BeforeEach
     void preparar() {
@@ -528,6 +543,133 @@ class MaestrosWebTest {
         assertThat(html).contains("Seleccione una unidad");
     }
 
+    // --------------------------------------------- modulo movimientos/inventario
+
+    @Test
+    void adminPuedeVerElListadoDeMovimientos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(get("/movimientos").session(sesion))
+                .andExpect(status().isOk())
+                .andExpect(view().name("movimientos/lista"));
+    }
+
+    @Test
+    void logisticaPuedeVerElListadoDeMovimientos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(get("/movimientos").session(sesion)).andExpect(status().isOk());
+    }
+
+    @Test
+    void losAnonimosSonRedirigidosAlLoginEnMovimientos() throws Exception {
+        mockMvc.perform(get("/movimientos"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/login"));
+        mockMvc.perform(get("/inventario"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test
+    void logisticaNoPuedeAccederAlFormularioDeMovimientos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(get("/movimientos/nuevo").param("tipo", "ENTRADA").session(sesion))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void logisticaNoPuedeRegistrarMovimientos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(post("/movimientos").session(sesion)
+                        .param("tipo", "ENTRADA")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isForbidden());
+        verify(movimientoDao, never()).guardar(any());
+    }
+
+    @Test
+    void adminPuedeRegistrarUnMovimiento() throws Exception {
+        prepararMovimiento();
+        when(movimientoDao.guardar(any(Movimiento.class))).thenReturn(55L);
+        when(movimientoDao.guardarDetalle(any())).thenReturn(1);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(post("/movimientos").session(sesion)
+                        .principal(() -> CORREO_ADMIN)
+                        .param("tipo", "ENTRADA")
+                        .param("idMotivoMovimiento", "1")
+                        .param("lineas[0].idProducto", "1")
+                        .param("lineas[0].cantidad", "10.000")
+                        .param("observacion", "Ingreso por compra")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/movimientos/55"));
+
+        verify(movimientoDao).guardar(any(Movimiento.class));
+        verify(movimientoDao).guardarDetalle(any());
+    }
+
+    @Test
+    void elFormularioDeMovimientoMuestraLosErroresDeValidacion() throws Exception {
+        prepararMovimiento();
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/movimientos").session(sesion)
+                        .principal(() -> CORREO_ADMIN)
+                        .param("tipo", "ENTRADA")
+                        .param("lineas[0].idProducto", "")
+                        .param("lineas[0].cantidad", "")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("movimientos/formulario"))
+                .andReturn();
+
+        String html = resultado.getResponse().getContentAsString();
+        assertThat(html).contains("El motivo del movimiento es obligatorio.");
+        verify(movimientoDao, never()).guardar(any());
+    }
+
+    @Test
+    void elMovimientoInexistenteRedirigeConMensaje() throws Exception {
+        when(movimientoDao.buscarPorId(99L)).thenReturn(Optional.empty());
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(get("/movimientos/99").session(sesion))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/movimientos"))
+                .andReturn();
+
+        assertThat(mensajeDeError(resultado)).contains("no existe");
+    }
+
+    @Test
+    void elListadoDeMovimientosOcultaElRegistroALaLogistica() throws Exception {
+        when(movimientoDao.listarTodos(any(), any(), any(), any(), any()))
+                .thenReturn(List.of(movimiento()));
+
+        String comoAdmin = contenido(get("/movimientos").session(iniciarSesion(CORREO_ADMIN)));
+        String comoLogistica = contenido(get("/movimientos").session(iniciarSesion(CORREO_LOGISTICA)));
+
+        assertThat(comoAdmin).contains("Registrar entrada").contains("Registrar salida");
+        assertThat(comoLogistica)
+                .doesNotContain("Registrar entrada")
+                .doesNotContain("Registrar salida");
+    }
+
+    @Test
+    void ambosRolesPuedenConsultarElInventario() throws Exception {
+        when(inventarioDao.listarTodo()).thenReturn(List.of(inventario()));
+
+        String comoAdmin = contenido(get("/inventario").session(iniciarSesion(CORREO_ADMIN)));
+        String comoLogistica = contenido(get("/inventario").session(iniciarSesion(CORREO_LOGISTICA)));
+
+        assertThat(comoAdmin).contains("Existencias actuales");
+        assertThat(comoLogistica).contains("Existencias actuales");
+    }
+
     // ----------------------------------------------------------- auxiliares
 
     private String contenido(org.springframework.test.web.servlet.RequestBuilder solicitud) throws Exception {
@@ -600,6 +742,45 @@ class MaestrosWebTest {
         producto.setStockMinimo(new java.math.BigDecimal("20.000"));
         producto.setActivo(true);
         return producto;
+    }
+
+    /** Carga motivos, productos y existencias para el formulario de movimientos. */
+    private void prepararMovimiento() {
+        when(motivoMovimientoDao.listarPorTipo(any())).thenReturn(List.of(motivoMovimiento()));
+        when(motivoMovimientoDao.buscarPorId(1L)).thenReturn(Optional.of(motivoMovimiento()));
+        when(inventarioDao.listarTodo()).thenReturn(List.of(inventario()));
+        when(productoDao.buscarPorId(1L)).thenReturn(Optional.of(producto(1L)));
+        when(productoDao.obtenerStockActual(1L)).thenReturn(new java.math.BigDecimal("100.000"));
+    }
+
+    private MotivoMovimiento motivoMovimiento() {
+        MotivoMovimiento motivo = new MotivoMovimiento();
+        motivo.setIdMotivoMovimiento(1L);
+        motivo.setCodigo("ENTRADA_COMPRA");
+        motivo.setNombre("Compra");
+        motivo.setTipo("ENTRADA");
+        motivo.setActivo(true);
+        return motivo;
+    }
+
+    private Inventario inventario() {
+        Inventario inventario = new Inventario();
+        inventario.setIdInventario(1L);
+        inventario.setProducto(producto(1L));
+        inventario.setStock(new java.math.BigDecimal("100.000"));
+        return inventario;
+    }
+
+    private Movimiento movimiento() {
+        Movimiento movimiento = new Movimiento();
+        movimiento.setIdMovimiento(1L);
+        movimiento.setCodigo("MOV-20260101000000-ABCDEF12");
+        movimiento.setMotivoMovimiento(motivoMovimiento());
+        movimiento.setUsuario(usuario(CORREO_ADMIN, CORREO_ADMIN));
+        movimiento.setFechaMovimiento(java.time.OffsetDateTime.now());
+        movimiento.setTipo("ENTRADA");
+        movimiento.setEstado("VIGENTE");
+        return movimiento;
     }
 
     private Usuario usuario(String codigoRol, String correo) {

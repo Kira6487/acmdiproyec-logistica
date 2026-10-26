@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Existencias actuales del almacén">
+  <title>Inventario | ACM Diproyec</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
+  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<nav th:replace="~{fragments/navigation :: navigation('inventario')}"></nav>
+
+<main id="contenido-principal" tabindex="-1">
+  <section class="container" aria-labelledby="page-title">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">Inventario</p>
+        <h1 id="page-title">Existencias actuales</h1>
+        <p class="hero-description">
+          Stock disponible por producto. El stock lo actualiza la base de datos
+          al registrar cada movimiento.
+        </p>
+      </div>
+    </div>
+
+    <div class="message message-success" role="status"
+         th:if="${mensajeExito}" th:text="${mensajeExito}"></div>
+    <div class="message message-error" role="alert"
+         th:if="${mensajeError}" th:text="${mensajeError}"></div>
+
+    <div class="card" th:if="${!existencias.isEmpty()}">
+      <div class="table-responsive">
+        <table class="responsive-table">
+          <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Producto</th>
+            <th scope="col">Categoría</th>
+            <th scope="col">Unidad</th>
+            <th scope="col">Stock actual</th>
+            <th scope="col">Stock mínimo</th>
+            <th scope="col">Estado</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="fila : ${existencias}">
+            <td th:text="${fila.producto.codigo}">DADO-2CM</td>
+            <td th:text="${fila.producto.nombre}">Dado separador de 2 cm</td>
+            <td th:text="${fila.producto.categoria.nombre}">Dados</td>
+            <td th:text="${fila.producto.unidadMedida.abreviatura}">und</td>
+            <td th:text="${fila.stock}">100.000</td>
+            <td th:text="${fila.producto.stockMinimo}">20.000</td>
+            <td>
+                <span class="badge"
+                      th:classappend="${fila.stock <= fila.producto.stockMinimo} ? 'badge-warning' : 'badge-success'"
+                      th:text="${fila.stock <= fila.producto.stockMinimo} ? 'Bajo mínimo' : 'Normal'">Normal</span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="empty-state card" th:if="${existencias.isEmpty()}">
+      <h2>No hay existencias registradas</h2>
+      <p>Las existencias aparecerán aquí cuando se registren productos y movimientos.</p>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

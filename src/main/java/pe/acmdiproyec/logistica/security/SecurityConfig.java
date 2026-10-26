@@ -22,18 +22,17 @@ public class SecurityConfig {
 	http
 		.authorizeHttpRequests(auth -> auth
 			.requestMatchers("/", "/login", "/css/**", "/js/**", "/img/**", "/imagenes/**", "/images/**").permitAll()
-			.requestMatchers(HttpMethod.POST, "/categorias/**", "/unidades-medida/**", "/productos/**")
+			.requestMatchers(HttpMethod.POST, "/categorias/**", "/unidades-medida/**", "/productos/**", "/movimientos/**")
 			.hasAnyRole("ADMIN")
 			.requestMatchers("/categorias/nuevo", "/categorias/*/editar",
 					"/unidades-medida/nuevo", "/unidades-medida/*/editar",
-					"/productos/nuevo", "/productos/*/editar")
+					"/productos/nuevo", "/productos/*/editar",
+					"/movimientos/nuevo")
 			.hasAnyRole("ADMIN")
-			.requestMatchers("/categorias/**", "/unidades-medida/**", "/productos/**")
+			.requestMatchers("/categorias/**", "/unidades-medida/**", "/productos/**", "/movimientos/**")
 			.hasAnyRole("ADMIN", "LOGISTICA")
 			.requestMatchers("/usuarios/**", "/roles/**")
 			.hasAnyRole("ADMIN")
-			.requestMatchers("/movimientos/**")
-			.hasAnyRole("ADMIN", "LOGISTICA")
 			.requestMatchers("/dashboard/**", "/reportes/**", "/inventario/**")
 			.hasAnyRole("ADMIN", "LOGISTICA")
 			.anyRequest().authenticated())
