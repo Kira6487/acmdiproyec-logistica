@@ -15,10 +15,10 @@
 
 		<nav>
             <a href="#inicio">Inicio</a>
-            <a sec:authorize="hasAnyRole('ADMINISTRACION', 'ADMIN', 'LOGISTICA', 'SISTEMAS', 'SISTEMA')" href="/dashboard">Dashboard</a>
-            <a sec:authorize="hasAnyRole('ADMINISTRACION', 'ADMIN', 'LOGISTICA', 'SISTEMAS', 'SISTEMA')" href="/inventario">Consulta de stock</a>
-            <a sec:authorize="hasAnyRole('SISTEMAS', 'SISTEMA')" href="/usuarios">Usuarios</a>
-            <a sec:authorize="hasAnyRole('LOGISTICA', 'SISTEMAS', 'SISTEMA')" href="/movimientos">Movimientos</a>
+            <a sec:authorize="hasAnyRole('ADMIN', 'LOGISTICA')" href="/dashboard">Dashboard</a>
+            <a sec:authorize="hasAnyRole('ADMIN', 'LOGISTICA')" href="/inventario">Consulta de stock</a>
+            <a sec:authorize="hasAnyRole('ADMIN')" href="/usuarios">Usuarios</a>
+            <a sec:authorize="hasAnyRole('ADMIN', 'LOGISTICA')" href="/movimientos">Movimientos</a>
 		</nav>
 
         <form sec:authorize="isAuthenticated()" action="/logout" method="post">

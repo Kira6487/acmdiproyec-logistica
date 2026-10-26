@@ -22,11 +22,11 @@ public class SecurityConfig {
 		.authorizeHttpRequests(auth -> auth
 			.requestMatchers("/", "/login", "/css/**", "/js/**", "/img/**", "/imagenes/**", "/images/**").permitAll()
 			.requestMatchers("/usuarios/**", "/roles/**")
-			.hasAnyRole("SISTEMAS", "SISTEMA")
+			.hasAnyRole("ADMIN")
 			.requestMatchers("/movimientos/**")
-			.hasAnyRole("LOGISTICA", "SISTEMAS", "SISTEMA")
+			.hasAnyRole("ADMIN", "LOGISTICA")
 			.requestMatchers("/dashboard/**", "/reportes/**", "/productos/**", "/inventario/**")
-			.hasAnyRole("ADMINISTRACION", "ADMIN", "LOGISTICA", "SISTEMAS", "SISTEMA")
+			.hasAnyRole("ADMIN", "LOGISTICA")
 			.anyRequest().authenticated())
 		.formLogin(form -> form
 			.loginPage("/login")
