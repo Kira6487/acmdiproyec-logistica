@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Mantenimiento de unidades de medida del almacén">
+  <title>Unidades de medida | ACM Diproyec</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
+  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<nav th:replace="~{fragments/navigation :: navigation('unidades')}"></nav>
+
+<main id="contenido-principal" tabindex="-1">
+  <section class="container" aria-labelledby="page-title">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">Datos maestros</p>
+        <h1 id="page-title">Unidades de medida</h1>
+        <p class="hero-description">
+          Definen cómo se cuantifican los productos del almacén.
+        </p>
+      </div>
+      <a class="button button-primary" sec:authorize="hasAnyRole('ADMIN')"
+         th:href="@{/unidades-medida/nuevo}" href="/unidades-medida/nuevo">Nueva unidad</a>
+    </div>
+
+    <div class="message message-success" role="status"
+         th:if="${mensajeExito}" th:text="${mensajeExito}"></div>
+    <div class="message message-error" role="alert"
+         th:if="${mensajeError}" th:text="${mensajeError}"></div>
+
+    <div class="card" th:if="${!unidadesMedida.isEmpty()}">
+      <div class="table-responsive">
+        <table class="responsive-table">
+          <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Abreviatura</th>
+            <th scope="col">Estado</th>
+            <th scope="col" sec:authorize="hasAnyRole('ADMIN')">Acciones</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="unidad : ${unidadesMedida}">
+            <td th:text="${unidad.codigo}">UNIDAD</td>
+            <td th:text="${unidad.nombre}">Unidad</td>
+            <td th:text="${unidad.abreviatura}">und</td>
+            <td>
+                <span class="badge"
+                      th:classappend="${unidad.activo} ? 'badge-success' : 'badge-neutral'"
+                      th:text="${unidad.activo} ? 'Activa' : 'Inactiva'">Activa</span>
+            </td>
+            <td sec:authorize="hasAnyRole('ADMIN')">
+              <a class="button button-secondary"
+                 th:href="@{/unidades-medida/{id}/editar(id=${unidad.idUnidadMedida})}"
+                 href="/unidades-medida/1/editar">Editar</a>
+              <form class="form-inline" method="post"
+                    th:action="@{/unidades-medida/{id}/eliminar(id=${unidad.idUnidadMedida})}"
+                    onsubmit="return confirm('¿Eliminar esta unidad de medida? Esta acción no se puede deshacer.');">
+                <button type="submit" class="button button-danger">Eliminar</button>
+              </form>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="empty-state card" th:if="${unidadesMedida.isEmpty()}">
+      <h2>No hay unidades de medida registradas</h2>
+      <p sec:authorize="hasAnyRole('ADMIN')">
+        Registre la primera unidad de medida para poder usarla en los productos.
+      </p>
+      <p sec:authorize="hasAnyRole('LOGISTICA')">
+        Todavía no hay unidades de medida. Un administrador debe registrarlas.
+      </p>
+      <a class="button button-primary" sec:authorize="hasAnyRole('ADMIN')"
+         th:href="@{/unidades-medida/nuevo}" href="/unidades-medida/nuevo">Registrar unidad</a>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

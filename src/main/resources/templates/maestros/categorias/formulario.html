@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Formulario de categoría de productos">
+  <title>Categorías | ACM Diproyec</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
+  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<nav th:replace="~{fragments/navigation :: navigation('categorias')}"></nav>
+
+<main id="contenido-principal" tabindex="-1">
+  <section class="container" aria-labelledby="page-title">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">Datos maestros</p>
+        <h1 id="page-title" th:text="${tituloFormulario}">Nueva categoría</h1>
+        <p class="hero-description">
+          Complete los datos de la categoría. Los campos marcados son obligatorios.
+        </p>
+      </div>
+      <a class="button button-secondary" th:href="@{/categorias}" href="/categorias">
+        Volver al listado
+      </a>
+    </div>
+
+    <form class="card form-grid"
+          th:object="${categoria}"
+          th:action="${categoria.idCategoria != null} ? @{/categorias/{id}(id=${categoria.idCategoria})} : @{/categorias}"
+          method="post">
+
+      <input type="hidden" th:field="*{idCategoria}">
+
+      <div class="message message-error" role="alert"
+           th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
+
+      <div class="form-field">
+        <label for="codigo">Código</label>
+        <input class="input" type="text" id="codigo" th:field="*{codigo}"
+               maxlength="30" autocomplete="off" required>
+        <p class="form-help">Identificador corto de la categoría. Hasta 30 caracteres.</p>
+        <p class="message message-error" th:if="${#fields.hasErrors('codigo')}"
+           th:errors="*{codigo}"></p>
+      </div>
+
+      <div class="form-field">
+        <label for="nombre">Nombre</label>
+        <input class="input" type="text" id="nombre" th:field="*{nombre}"
+               maxlength="100" autocomplete="off" required>
+        <p class="form-help">Nombre visible de la categoría. Hasta 100 caracteres.</p>
+        <p class="message message-error" th:if="${#fields.hasErrors('nombre')}"
+           th:errors="*{nombre}"></p>
+      </div>
+
+      <div class="form-field">
+        <label for="descripcion">Descripción</label>
+        <textarea class="textarea" id="descripcion" th:field="*{descripcion}"
+                  maxlength="250" rows="3"></textarea>
+        <p class="form-help">Opcional. Hasta 250 caracteres.</p>
+        <p class="message message-error" th:if="${#fields.hasErrors('descripcion')}"
+           th:errors="*{descripcion}"></p>
+      </div>
+
+      <div class="form-field" sec:authorize="hasAnyRole('ADMIN')">
+        <label for="activo">Estado</label>
+        <select class="select" id="activo" th:field="*{activo}">
+          <option value="true">Activa</option>
+          <option value="false">Inactiva</option>
+        </select>
+        <p class="form-help">
+          Una categoría inactiva no se ofrecerá al registrar productos.
+        </p>
+      </div>
+
+      <div class="form-field">
+        <button type="submit" class="button button-primary">Guardar</button>
+        <a class="button button-secondary" th:href="@{/categorias}" href="/categorias">Cancelar</a>
+      </div>
+    </form>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

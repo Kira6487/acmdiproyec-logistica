@@ -26,6 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.mock.web.MockHttpSession;
 
+import pe.acmdiproyec.logistica.dao.CategoriaDao;
+import pe.acmdiproyec.logistica.dao.UnidadMedidaDao;
 import pe.acmdiproyec.logistica.dao.UsuarioDao;
 import pe.acmdiproyec.logistica.model.Rol;
 import pe.acmdiproyec.logistica.model.Usuario;
@@ -61,6 +63,18 @@ class SeguridadRolesTest {
 
     @MockitoBean
     private UsuarioDao usuarioDao;
+
+    /**
+     * Los DAO JDBC de datos maestros necesitan JdbcTemplate. Como el perfil
+     * {@code test} excluye la autoconfiguracion del DataSource, se sustituyen
+     * por dobles para que el contexto arranque sin base de datos. Ninguna
+     * prueba de esta clase los utiliza.
+     */
+    @MockitoBean
+    private CategoriaDao categoriaDao;
+
+    @MockitoBean
+    private UnidadMedidaDao unidadMedidaDao;
 
     // ---------------------------------------------------------------
     // 1. La configuración reconoce el rol ADMIN como ROLE_ADMIN

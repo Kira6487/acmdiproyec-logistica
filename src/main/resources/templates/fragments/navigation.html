@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 <nav class="site-navigation" th:fragment="navigation(seccionActiva)"
      aria-label="Navegación principal">
@@ -16,6 +17,14 @@
       </a>
       <a th:href="@{/#accesos}" href="/#accesos">Accesos</a>
       <a th:href="@{/#estado}" href="/#estado">Estado</a>
+      <a th:href="@{/categorias}" href="/categorias" sec:authorize="isAuthenticated()"
+         th:attr="aria-current=${seccionActiva == 'categorias'} ? 'page' : null">
+        Categorías
+      </a>
+      <a th:href="@{/unidades-medida}" href="/unidades-medida" sec:authorize="isAuthenticated()"
+         th:attr="aria-current=${seccionActiva == 'unidades'} ? 'page' : null">
+        Unidades de medida
+      </a>
     </div>
   </div>
 </nav>

@@ -2,6 +2,7 @@ package pe.acmdiproyec.logistica.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +22,13 @@ public class SecurityConfig {
 	http
 		.authorizeHttpRequests(auth -> auth
 			.requestMatchers("/", "/login", "/css/**", "/js/**", "/img/**", "/imagenes/**", "/images/**").permitAll()
+			.requestMatchers(HttpMethod.POST, "/categorias/**", "/unidades-medida/**")
+			.hasAnyRole("ADMIN")
+			.requestMatchers("/categorias/nuevo", "/categorias/*/editar",
+					"/unidades-medida/nuevo", "/unidades-medida/*/editar")
+			.hasAnyRole("ADMIN")
+			.requestMatchers("/categorias/**", "/unidades-medida/**")
+			.hasAnyRole("ADMIN", "LOGISTICA")
 			.requestMatchers("/usuarios/**", "/roles/**")
 			.hasAnyRole("ADMIN")
 			.requestMatchers("/movimientos/**")
