@@ -1,123 +1,120 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Registro de movimiento de inventario">
-  <title>Movimientos | ACM Diproyec</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head(tituloFormulario)}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('movimientos')}"></nav>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('movimientos')}"></aside>
 
-<main id="contenido-principal" tabindex="-1">
-  <section class="container" aria-labelledby="page-title">
-    <div class="page-heading">
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
       <div>
-        <p class="eyebrow">Inventario</p>
-        <h1 id="page-title" th:text="${tituloFormulario}">Registrar entrada</h1>
-        <p class="hero-description">
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li><a th:href="@{/movimientos}" href="/movimientos">Movimientos</a></li>
+            <li th:text="${tituloFormulario}">Registro</li>
+          </ol>
+        </nav>
+        <h1 th:text="${tituloFormulario}">Registrar entrada</h1>
+        <p class="acm-help">
           Los productos y el motivo deben existir en el sistema. El stock se
           actualiza automáticamente al guardar.
         </p>
       </div>
-      <a class="button button-secondary" th:href="@{/movimientos}" href="/movimientos">
-        Volver al historial
-      </a>
-    </div>
-
-    <form class="card form-grid"
-          th:object="${movimiento}"
-          th:action="@{/movimientos(tipo=${tipo})}"
-          method="post">
-
-      <div class="message message-error" role="alert"
-           th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
-
-      <div class="form-field">
-        <label for="idMotivoMovimiento">Motivo del movimiento</label>
-        <select class="select" id="idMotivoMovimiento" th:field="*{idMotivoMovimiento}" required>
-          <option value="">Seleccione un motivo</option>
-          <option th:each="motivo : ${motivos}"
-                  th:value="${motivo.idMotivoMovimiento}"
-                  th:text="${motivo.nombre}">Compra</option>
-        </select>
-        <p class="form-help">
-          El tipo de movimiento se deriva del motivo elegido.
-        </p>
-        <p class="message message-error" th:if="${#fields.hasErrors('idMotivoMovimiento')}"
-           th:errors="*{idMotivoMovimiento}"></p>
+      <div class="acm-actions">
+        <a class="btn btn-outline-secondary" th:href="@{/movimientos}" href="/movimientos">
+          Volver al historial
+        </a>
       </div>
+    </header>
 
-      <div class="form-field">
-        <label>Productos</label>
-        <div id="lineas">
-          <div class="form-grid linea" th:each="linea, it : *{lineas}">
-            <div class="form-field">
-              <label th:for="'producto-' + ${it.index}">Producto</label>
-              <select class="select" th:id="'producto-' + ${it.index}"
-                      th:field="*{lineas[__${it.index}__].idProducto}" required>
-                <option value="">Seleccione un producto</option>
-                <option th:each="fila : ${productos}"
-                        th:value="${fila.producto.idProducto}"
-                        th:text="${fila.producto.nombre + ' - Stock: ' + fila.stock}">Producto</option>
-              </select>
-              <p class="message message-error"
-                 th:if="${#fields.hasErrors('lineas[' + it.index + '].idProducto')}"
-                 th:errors="*{lineas[__${it.index}__].idProducto}"></p>
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
+
+    <form class="card" th:object="${movimiento}"
+          th:action="@{/movimientos(tipo=${tipo})}" method="post">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="alert alert-danger" role="alert"
+                 th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="idMotivoMovimiento">Motivo del movimiento *</label>
+            <select class="form-select" id="idMotivoMovimiento" th:field="*{idMotivoMovimiento}" required>
+              <option value="">Seleccione un motivo</option>
+              <option th:each="motivo : ${motivos}"
+                      th:value="${motivo.idMotivoMovimiento}"
+                      th:text="${motivo.nombre}">Compra</option>
+            </select>
+            <p class="acm-help">El tipo de movimiento se deriva del motivo elegido.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('idMotivoMovimiento')}"
+               th:errors="*{idMotivoMovimiento}"></p>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Productos *</label>
+            <div id="lineas">
+              <div class="row g-2 linea align-items-end" th:each="linea, it : *{lineas}">
+                <div class="col-12 col-md-8">
+                  <label class="form-label" th:for="'producto-' + ${it.index}">Producto</label>
+                  <select class="form-select" th:id="'producto-' + ${it.index}"
+                          th:field="*{lineas[__${it.index}__].idProducto}" required>
+                    <option value="">Seleccione un producto</option>
+                    <option th:each="fila : ${productos}"
+                            th:value="${fila.producto.idProducto}"
+                            th:text="${fila.producto.nombre + ' - Stock: ' + fila.stock}">Producto</option>
+                  </select>
+                  <p class="alert alert-danger"
+                     th:if="${#fields.hasErrors('lineas[' + it.index + '].idProducto')}"
+                     th:errors="*{lineas[__${it.index}__].idProducto}"></p>
+                </div>
+                <div class="col-8 col-md-3">
+                  <label class="form-label" th:for="'cantidad-' + ${it.index}">Cantidad</label>
+                  <input class="form-control" type="number" th:id="'cantidad-' + ${it.index}"
+                         th:field="*{lineas[__${it.index}__].cantidad}"
+                         min="0.001" step="0.001" inputmode="decimal" required>
+                  <p class="alert alert-danger"
+                     th:if="${#fields.hasErrors('lineas[' + it.index + '].cantidad')}"
+                     th:errors="*{lineas[__${it.index}__].cantidad}"></p>
+                </div>
+              </div>
             </div>
-            <div class="form-field">
-              <label th:for="'cantidad-' + ${it.index}">Cantidad</label>
-              <input class="input" type="number" th:id="'cantidad-' + ${it.index}"
-                     th:field="*{lineas[__${it.index}__].cantidad}"
-                     min="0.001" step="0.001" inputmode="decimal" required>
-              <p class="message message-error"
-                 th:if="${#fields.hasErrors('lineas[' + it.index + '].cantidad')}"
-                 th:errors="*{lineas[__${it.index}__].cantidad}"></p>
-            </div>
+            <p class="acm-help">Puede registrar varios productos en un mismo movimiento.</p>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="agregar-linea">
+              Agregar producto
+            </button>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label" for="observacion">Observación</label>
+            <textarea class="form-control" id="observacion" th:field="*{observacion}"
+                      maxlength="500" rows="3"></textarea>
+            <p class="acm-help">Opcional. Hasta 500 caracteres.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('observacion')}"
+               th:errors="*{observacion}"></p>
+          </div>
+
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">Guardar movimiento</button>
+            <a class="btn btn-outline-secondary" th:href="@{/movimientos}" href="/movimientos">Cancelar</a>
           </div>
         </div>
-        <p class="form-help">
-          Puede registrar varios productos en un mismo movimiento.
-        </p>
-        <button type="button" class="button button-secondary" id="agregar-linea">
-          Agregar producto
-        </button>
-      </div>
-
-      <div class="form-field">
-        <label for="observacion">Observación</label>
-        <textarea class="textarea" id="observacion" th:field="*{observacion}"
-                  maxlength="500" rows="3"></textarea>
-        <p class="form-help">Opcional. Hasta 500 caracteres.</p>
-        <p class="message message-error" th:if="${#fields.hasErrors('observacion')}"
-           th:errors="*{observacion}"></p>
-      </div>
-
-      <div class="form-field">
-        <button type="submit" class="button button-primary">Guardar movimiento</button>
-        <a class="button button-secondary" th:href="@{/movimientos}" href="/movimientos">Cancelar</a>
       </div>
     </form>
-  </section>
-</main>
+  </main>
+</div>
 
-<footer th:replace="~{fragments/footer :: footer}"></footer>
-<script th:inline="javascript">
+<script>
   document.addEventListener('DOMContentLoaded', function () {
     var contenedor = document.getElementById('lineas');
     var boton = document.getElementById('agregar-linea');
-    if (!contenedor || !boton) {
-      return;
-    }
+    if (!contenedor || !boton) { return; }
     boton.addEventListener('click', function () {
       var filas = contenedor.querySelectorAll('.linea');
       var indice = filas.length;
-      var clon = filas[0].cloneNode(true);
+      var clon = filas[filas.length - 1].cloneNode(true);
       clon.querySelectorAll('input, select').forEach(function (campo) {
         campo.value = '';
         campo.name = campo.name.replace(/lineas\[\d+]/, 'lineas[' + indice + ']');
@@ -128,6 +125,7 @@
           etiqueta.htmlFor = etiqueta.htmlFor.replace(/-\d+$/, '-' + indice);
         }
       });
+      clon.querySelectorAll('.alert').forEach(function (aviso) { aviso.remove(); });
       contenedor.appendChild(clon);
     });
   });

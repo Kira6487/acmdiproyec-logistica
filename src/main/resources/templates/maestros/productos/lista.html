@@ -1,95 +1,91 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Mantenimiento de productos del almacén">
-  <title>Productos | ACM Diproyec</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('Productos')}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('productos')}"></nav>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('productos')}"></aside>
 
-<main id="contenido-principal" tabindex="-1">
-  <section class="container" aria-labelledby="page-title">
-    <div class="page-heading">
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
       <div>
-        <p class="eyebrow">Datos maestros</p>
-        <h1 id="page-title">Productos</h1>
-        <p class="hero-description">
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li>Datos maestros</li>
+            <li>Productos</li>
+          </ol>
+        </nav>
+        <h1>Productos</h1>
+        <p class="acm-help">
           Catálogo de productos del almacén. Cada producto se clasifica en una
           categoría y se cuantifica con una unidad de medida.
         </p>
       </div>
-      <a class="button button-primary" sec:authorize="hasAnyRole('ADMIN')"
-         th:href="@{/productos/nuevo}" href="/productos/nuevo">Nuevo producto</a>
-    </div>
+      <div class="acm-actions" sec:authorize="hasAnyRole('ADMIN')">
+        <a class="btn btn-primary" th:href="@{/productos/nuevo}" href="/productos/nuevo">Nuevo producto</a>
+      </div>
+    </header>
 
-    <div class="message message-success" role="status"
-         th:if="${mensajeExito}" th:text="${mensajeExito}"></div>
-    <div class="message message-error" role="alert"
-         th:if="${mensajeError}" th:text="${mensajeError}"></div>
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
 
-    <div class="card" th:if="${!productos.isEmpty()}">
-      <div class="table-responsive">
-        <table class="responsive-table">
-          <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Nombre</th>
-            <th scope="col">Categoría</th>
-            <th scope="col">Unidad</th>
-            <th scope="col">Stock mínimo</th>
-            <th scope="col">Estado</th>
-            <th scope="col" sec:authorize="hasAnyRole('ADMIN')">Acciones</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr th:each="producto : ${productos}">
-            <td th:text="${producto.codigo}">DADO-2CM</td>
-            <td th:text="${producto.nombre}">Dado separador de 2 cm</td>
-            <td th:text="${producto.categoria.nombre}">Dados</td>
-            <td th:text="${producto.unidadMedida.abreviatura}">und</td>
-            <td th:text="${producto.stockMinimo}">0</td>
-            <td>
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive" th:if="${!productos.isEmpty()}">
+          <table class="table">
+            <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Producto</th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Unidad</th>
+              <th scope="col">Stock mínimo</th>
+              <th scope="col">Estado</th>
+              <th scope="col" sec:authorize="hasAnyRole('ADMIN')">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="producto : ${productos}">
+              <td th:text="${producto.codigo}">CEM-001</td>
+              <td th:text="${producto.nombre}">Cemento</td>
+              <td th:text="${producto.categoria.nombre}">Categoría</td>
+              <td th:text="${producto.unidadMedida.abreviatura}">und</td>
+              <td th:text="${producto.stockMinimo}">0</td>
+              <td>
                 <span class="badge"
-                      th:classappend="${producto.activo} ? 'badge-success' : 'badge-neutral'"
+                      th:classappend="${producto.activo} ? 'acm-badge-success' : 'acm-badge-neutral'"
                       th:text="${producto.activo} ? 'Activo' : 'Inactivo'">Activo</span>
-            </td>
-            <td sec:authorize="hasAnyRole('ADMIN')">
-              <a class="button button-secondary"
-                 th:href="@{/productos/{id}/editar(id=${producto.idProducto})}"
-                 href="/productos/1/editar">Editar</a>
-              <form class="form-inline" method="post"
-                    th:action="@{/productos/{id}/eliminar(id=${producto.idProducto})}"
-                    onsubmit="return confirm('¿Eliminar este producto? Esta acción no se puede deshacer.');">
-                <button type="submit" class="button button-danger">Eliminar</button>
-              </form>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+              </td>
+              <td sec:authorize="hasAnyRole('ADMIN')">
+                <div class="acm-table-actions">
+                  <a class="btn btn-sm btn-outline-light"
+                     th:href="@{/productos/{id}/editar(id=${producto.idProducto})}"
+                     href="/productos/1/editar">Editar</a>
+                  <form th:action="@{/productos/{id}/eliminar(id=${producto.idProducto})}"
+                        method="post"
+                        onsubmit="return confirm('¿Eliminar este producto? Esta acción no se puede deshacer.');">
+                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div th:replace="~{fragments/empty-state :: vacio(
+                'No hay productos registrados',
+                'Aún no hay productos disponibles en el sistema.',
+                @{/productos/nuevo},
+                'Registrar producto')}"
+             th:if="${productos.isEmpty()}"></div>
+
+        <p class="acm-table-note">
+          Mostrando <span th:text="${#lists.size(productos)}">0</span> productos.
+        </p>
       </div>
     </div>
-
-    <div class="empty-state card" th:if="${productos.isEmpty()}">
-      <h2>No hay productos registrados</h2>
-      <p sec:authorize="hasAnyRole('ADMIN')">
-        Registre el primer producto para poder operar el inventario del almacén.
-      </p>
-      <p sec:authorize="hasAnyRole('LOGISTICA')">
-        Todavía no hay productos disponibles. Un administrador debe registrarlos.
-      </p>
-      <a class="button button-primary" sec:authorize="hasAnyRole('ADMIN')"
-         th:href="@{/productos/nuevo}" href="/productos/nuevo">Registrar producto</a>
-    </div>
-  </section>
-</main>
-
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+  </main>
+</div>
 </body>
 </html>

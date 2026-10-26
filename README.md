@@ -68,7 +68,7 @@ credenciales, tokens ni secretos en Git.
 
 | Variable | Obligatoria | Descripción |
 | --- | --- | --- |
-| `SUPABASE_DB_PASSWORD` | **Sí** | Contraseña de la base de datos. No admite valor predeterminado: si falta, la aplicación no arranca. |
+| `SUPABASE_DB_PASSWORD` | **Sí** | Contraseña de la base de datos. No admite valor predeterminado: sin ella la aplicación **arranca** pero no puede acceder a la base de datos (la autenticación y los módulos fallan al consultar). |
 | `SUPABASE_DB_USER` | No | Usuario. Predeterminado `postgres`. |
 | `SUPABASE_DB_HOST` | No | Host de conexión directa. Predeterminado el del entorno de pruebas. |
 | `SUPABASE_DB_PORT` | No | Puerto. Predeterminado `5432`. |

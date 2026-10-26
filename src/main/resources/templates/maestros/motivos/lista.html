@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head('Motivos de movimiento')}"></head>
+<body>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('motivos')}"></aside>
+
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
+      <div>
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li>Datos maestros</li>
+            <li>Motivos de movimiento</li>
+          </ol>
+        </nav>
+        <h1>Motivos de movimiento</h1>
+        <p class="acm-help">
+          Definen el motivo de cada entrada o salida y el tipo de movimiento al que pertenecen.
+        </p>
+      </div>
+      <div class="acm-actions" sec:authorize="hasAnyRole('ADMIN')">
+        <a class="btn btn-primary" th:href="@{/motivos/nuevo}" href="/motivos/nuevo">Nuevo motivo</a>
+      </div>
+    </header>
+
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive" th:if="${!motivos.isEmpty()}">
+          <table class="table">
+            <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Descripción</th>
+              <th scope="col">Estado</th>
+              <th scope="col" sec:authorize="hasAnyRole('ADMIN')">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="motivo : ${motivos}">
+              <td th:text="${motivo.codigo}">ENTRADA_COMPRA</td>
+              <td th:text="${motivo.nombre}">Compra</td>
+              <td>
+                <span class="badge"
+                      th:classappend="${motivo.tipo == 'ENTRADA'} ? 'acm-badge-success' : 'acm-badge-warning'"
+                      th:text="${motivo.tipo}">ENTRADA</span>
+              </td>
+              <td th:text="${motivo.descripcion} ?: 'Sin descripción'">Sin descripción</td>
+              <td>
+                <span class="badge"
+                      th:classappend="${motivo.activo} ? 'acm-badge-success' : 'acm-badge-neutral'"
+                      th:text="${motivo.activo} ? 'Activo' : 'Inactivo'">Activo</span>
+              </td>
+              <td sec:authorize="hasAnyRole('ADMIN')">
+                <div class="acm-table-actions">
+                  <a class="btn btn-sm btn-outline-light"
+                     th:href="@{/motivos/{id}/editar(id=${motivo.idMotivoMovimiento})}"
+                     href="/motivos/1/editar">Editar</a>
+                  <form th:action="@{/motivos/{id}/eliminar(id=${motivo.idMotivoMovimiento})}"
+                        method="post"
+                        onsubmit="return confirm('¿Eliminar este motivo? Esta acción no se puede deshacer.');">
+                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div th:replace="~{fragments/empty-state :: vacio(
+                'No hay motivos de movimiento registrados',
+                'Aún no hay motivos disponibles en el sistema.',
+                @{/motivos/nuevo},
+                'Registrar motivo')}"
+             th:if="${motivos.isEmpty()}"></div>
+
+        <p class="acm-table-note">
+          Mostrando <span th:text="${#lists.size(motivos)}">0</span> motivos de movimiento.
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

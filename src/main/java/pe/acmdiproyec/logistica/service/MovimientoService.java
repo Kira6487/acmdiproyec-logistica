@@ -44,8 +44,12 @@ import pe.acmdiproyec.logistica.model.Usuario;
 public class MovimientoService {
 
     /** Unicos tipos que admite el enum {@code tipo_movimiento}. */
-    public static final String TIPO_ENTRADA = "ENTRADA";
-    public static final String TIPO_SALIDA = "SALIDA";
+    public static final String TIPO_ENTRADA = MotivoMovimiento.TIPO_ENTRADA;
+    public static final String TIPO_SALIDA = MotivoMovimiento.TIPO_SALIDA;
+
+    /** Unicos estados que admite el enum {@code estado_movimiento}. */
+    public static final String ESTADO_VIGENTE = "VIGENTE";
+    public static final String ESTADO_ANULADO = "ANULADO";
 
     private static final DateTimeFormatter FORMATO_CODIGO =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -78,9 +82,7 @@ public class MovimientoService {
 
     /** Movimiento con sus lineas y el stock actual de cada producto. */
     public Movimiento obtenerMovimiento(Long idMovimiento) {
-        Movimiento movimiento = movimientoDao.buscarPorId(idMovimiento)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "El movimiento indicado no existe."));
+        Movimiento movimiento = buscarMovimiento(idMovimiento);
         movimiento.setDetalles(movimientoDao.listarDetalles(idMovimiento));
         return movimiento;
     }
@@ -142,6 +144,45 @@ public class MovimientoService {
         return idMovimiento;
     }
 
+    /**
+     * Anula un movimiento que esta en estado {@code VIGENTE}.
+     *
+     * La reversión del stock la realiza el disparador
+     * {@code trg_movimientos_revertir_anulacion} al producirse la transicion de
+     * estado. Este servicio NO toca {@code inventario} ni vuelve a sumar o
+     * restar cantidades: si lo hiciera, el efecto se revertiria dos veces.
+     *
+     * La actualizacion es condicional sobre {@code estado = 'VIGENTE'}, de modo
+     * que dos solicitudes concurrentes no pueden anular el mismo movimiento dos
+     * veces; la segunda no modifica ninguna fila y se rechaza con un mensaje
+     * claro. Toda la operacion es una sola sentencia atomica dentro de una
+     * transaccion.
+     */
+    @Transactional
+    public void anular(Long idMovimiento, String motivoAnulacion, String correoUsuario) {
+        String motivo = normalizarMotivoAnulacion(motivoAnulacion);
+
+        Movimiento movimiento = buscarMovimiento(idMovimiento);
+        if (ESTADO_ANULADO.equals(movimiento.getEstado())) {
+            throw new ReglaNegocioException("El movimiento ya fue anulado.");
+        }
+
+        Usuario usuario = buscarUsuario(correoUsuario);
+
+        int filas;
+        try {
+            filas = movimientoDao.anular(idMovimiento, usuario.getIdUsuario(), motivo);
+        } catch (DataAccessException excepcion) {
+            throw new ReglaNegocioException(
+                    "No se pudo anular el movimiento. Compruebe que la anulacion no deje "
+                            + "existencias negativas en el inventario.");
+        }
+        if (filas != 1) {
+            throw new ReglaNegocioException(
+                    "El movimiento ya no estaba vigente y no se puede anular dos veces.");
+        }
+    }
+
     // ------------------------------------------------------------ validaciones
 
     private MotivoMovimiento buscarMotivo(Long idMotivoMovimiento) {
@@ -160,6 +201,28 @@ public class MovimientoService {
                 .filter(Usuario::isActivo)
                 .orElseThrow(() -> new ReglaNegocioException(
                         "No se pudo identificar al usuario responsable del movimiento."));
+    }
+
+    private Movimiento buscarMovimiento(Long idMovimiento) {
+        return movimientoDao.buscarPorId(idMovimiento)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "El movimiento indicado no existe."));
+    }
+
+    /**
+     * El motivo de la anulacion es obligatorio y su longitud no puede superar la
+     * de la columna {@code motivo_anulacion varchar(500)}.
+     */
+    private String normalizarMotivoAnulacion(String motivoAnulacion) {
+        if (motivoAnulacion == null || motivoAnulacion.isBlank()) {
+            throw new ReglaNegocioException("El motivo de la anulacion es obligatorio.");
+        }
+        String motivo = motivoAnulacion.trim();
+        if (motivo.length() > 500) {
+            throw new ReglaNegocioException(
+                    "El motivo de la anulacion no puede superar 500 caracteres.");
+        }
+        return motivo;
     }
 
     /**

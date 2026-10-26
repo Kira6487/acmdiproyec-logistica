@@ -39,4 +39,16 @@ public interface MovimientoDao {
     Long guardar(Movimiento movimiento);
 
     int guardarDetalle(MovimientoDetalle detalle);
+
+    /**
+     * Marca el movimiento como {@code ANULADO} y registra el usuario, la fecha
+     * y el motivo de la anulacion.
+     *
+     * La actualizacion es condicional: solo afecta a movimientos que siguen en
+     * estado {@code VIGENTE}. Devuelve el numero de filas modificadas, de modo
+     * que un valor distinto de 1 indica que otro proceso anulo el movimiento
+     * antes o que ya no estaba vigente. Este es el mecanismo que impide una
+     * doble anulacion y, por tanto, una doble reversión del stock.
+     */
+    int anular(Long idMovimiento, Long idUsuarioAnulacion, String motivoAnulacion);
 }

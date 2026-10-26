@@ -1,95 +1,113 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description"
-        content="Interfaz preliminar del Sistema Logístico ACM Diproyec">
-  <title>Sistema Logístico ACM Diproyec</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head('Sistema Logístico ACM Diproyec')}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('inicio')}"></nav>
+<a class="skip-link" href="#contenido-principal">Saltar al contenido</a>
 
-<main id="contenido-principal" tabindex="-1">
-  <section class="hero container" aria-labelledby="page-title">
-    <p class="eyebrow">Gestión de almacén</p>
-    <div class="hero-layout">
-      <div>
-        <h1 id="page-title">Sistema Logístico ACM Diproyec</h1>
-        <p class="hero-description">
-          Registro y consulta de entradas, salidas y existencias para la operación
-          diaria del almacén.
-        </p>
-      </div>
-      <aside id="estado" class="application-status" aria-labelledby="status-title">
-        <span class="status-indicator" aria-hidden="true"></span>
-        <div>
-          <h2 id="status-title">Aplicación disponible</h2>
-          <p>La interfaz está operativa. Los módulos de datos se habilitarán progresivamente.</p>
-        </div>
-      </aside>
+<header class="acm-main" style="padding-bottom:0">
+  <div class="acm-topbar">
+    <div>
+      <p class="acm-eyebrow">Gestión de almacén</p>
+      <h1>Sistema Logístico ACM Diproyec</h1>
+      <p class="acm-help">
+        Registro y consulta de entradas, salidas y existencias para la operación diaria del almacén.
+      </p>
+    </div>
+    <div class="acm-actions">
+      <span class="badge acm-badge-warning">Versión preliminar</span>
+      <a class="btn btn-primary" sec:authorize="isAuthenticated()" th:href="@{/panel}" href="/panel">Ir al panel</a>
+      <a class="btn btn-primary" sec:authorize="!isAuthenticated()" th:href="@{/login}" href="/login">Iniciar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main class="acm-main" id="contenido-principal" tabindex="-1" style="padding-top:0">
+  <section class="card mb-3">
+    <div class="card-body">
+      <p class="acm-module-title">Aplicación disponible</p>
+      <p class="acm-module-text">
+        La interfaz está operativa. Los módulos de datos se habilitarán progresivamente.
+      </p>
     </div>
   </section>
 
-  <section id="accesos" class="modules container" aria-labelledby="modules-title">
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">Accesos principales</p>
-        <h2 id="modules-title">Operaciones logísticas</h2>
+  <section aria-labelledby="modules-title">
+    <p class="acm-eyebrow">Accesos principales</p>
+    <h2 id="modules-title" class="mb-3">Operaciones logísticas</h2>
+
+    <div class="row g-3">
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <p class="acm-eyebrow">01</p>
+            <p class="acm-module-title">Entrada de inventario</p>
+            <p class="acm-module-text">Registro de ingresos de productos al almacén.</p>
+            <span class="badge acm-badge-neutral mt-2" aria-disabled="true">Próximamente</span>
+          </div>
+        </div>
       </div>
-      <span class="badge badge-neutral">Versión preliminar</span>
-    </div>
 
-    <div class="module-grid">
-      <article class="card module-card module-card-entry">
-        <p class="module-card-number" aria-hidden="true">01</p>
-        <h3>Entrada de inventario</h3>
-        <p>Registro futuro de ingresos de productos al almacén.</p>
-        <span class="module-state" aria-disabled="true">Próximamente</span>
-      </article>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <p class="acm-eyebrow">02</p>
+            <p class="acm-module-title">Salida de inventario</p>
+            <p class="acm-module-text">Registro de entregas con validación de existencias.</p>
+            <span class="badge acm-badge-neutral mt-2" aria-disabled="true">Próximamente</span>
+          </div>
+        </div>
+      </div>
 
-      <article class="card module-card module-card-exit">
-        <p class="module-card-number" aria-hidden="true">02</p>
-        <h3>Salida de inventario</h3>
-        <p>Registro futuro de entregas con validación de existencias.</p>
-        <span class="module-state" aria-disabled="true">Próximamente</span>
-      </article>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <p class="acm-eyebrow">03</p>
+            <p class="acm-module-title">Stock actual</p>
+            <p class="acm-module-text">Consulta de cantidades disponibles por producto.</p>
+            <span class="badge acm-badge-neutral mt-2" aria-disabled="true">Próximamente</span>
+          </div>
+        </div>
+      </div>
 
-      <article class="card module-card">
-        <p class="module-card-number" aria-hidden="true">03</p>
-        <h3>Stock actual</h3>
-        <p>Consulta futura de cantidades disponibles por producto.</p>
-        <span class="module-state" aria-disabled="true">Próximamente</span>
-      </article>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <p class="acm-eyebrow">04</p>
+            <p class="acm-module-title">Historial de movimientos</p>
+            <p class="acm-module-text">Consulta de entradas, salidas y anulaciones registradas.</p>
+            <span class="badge acm-badge-neutral mt-2" aria-disabled="true">Próximamente</span>
+          </div>
+        </div>
+      </div>
 
-      <article class="card module-card">
-        <p class="module-card-number" aria-hidden="true">04</p>
-        <h3>Historial de movimientos</h3>
-        <p>Consulta futura de entradas, salidas y anulaciones registradas.</p>
-        <span class="module-state" aria-disabled="true">Próximamente</span>
-      </article>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <p class="acm-eyebrow">05</p>
+            <p class="acm-module-title">Datos maestros</p>
+            <p class="acm-module-text">Administración de productos, categorías, unidades y motivos.</p>
+            <span class="badge acm-badge-neutral mt-2" aria-disabled="true">Próximamente</span>
+          </div>
+        </div>
+      </div>
 
-      <article class="card module-card">
-        <p class="module-card-number" aria-hidden="true">05</p>
-        <h3>Datos maestros</h3>
-        <p>Administración futura de productos, categorías, unidades y motivos.</p>
-        <span class="module-state" aria-disabled="true">Próximamente</span>
-      </article>
-
-      <article class="card module-card">
-        <p class="module-card-number" aria-hidden="true">06</p>
-        <h3>Reportes</h3>
-        <p>Generación futura de consultas y documentos de la operación.</p>
-        <span class="module-state" aria-disabled="true">Próximamente</span>
-      </article>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <p class="acm-eyebrow">06</p>
+            <p class="acm-module-title">Reportes</p>
+            <p class="acm-module-text">Generación de consultas y documentos de la operación.</p>
+            <span class="badge acm-badge-neutral mt-2" aria-disabled="true">Próximamente</span>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+<footer class="acm-main" style="padding-top:0">
+  <p class="acm-help">© 2026 ACM Diproyec · Sistema logístico del almacén</p>
+</footer>
 </body>
 </html>

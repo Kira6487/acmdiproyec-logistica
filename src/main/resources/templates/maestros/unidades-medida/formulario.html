@@ -1,94 +1,91 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Formulario de unidad de medida">
-  <title>Unidades de medida | ACM Diproyec</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('Unidades de medida')}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('unidades')}"></nav>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('unidades')}"></aside>
 
-<main id="contenido-principal" tabindex="-1">
-  <section class="container" aria-labelledby="page-title">
-    <div class="page-heading">
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
       <div>
-        <p class="eyebrow">Datos maestros</p>
-        <h1 id="page-title" th:text="${tituloFormulario}">Nueva unidad de medida</h1>
-        <p class="hero-description">
-          Complete los datos de la unidad de medida. Los campos marcados son obligatorios.
-        </p>
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li><a th:href="@{/unidades-medida}" href="/unidades-medida">Unidades de medida</a></li>
+            <li th:text="${tituloFormulario}">Formulario</li>
+          </ol>
+        </nav>
+        <h1 th:text="${tituloFormulario}">Nueva unidad de medida</h1>
+        <p class="acm-help">Los campos marcados con * son obligatorios.</p>
       </div>
-      <a class="button button-secondary" th:href="@{/unidades-medida}" href="/unidades-medida">
-        Volver al listado
-      </a>
-    </div>
-
-    <form class="card form-grid"
-          th:object="${unidadMedida}"
-          th:action="${unidadMedida.idUnidadMedida != null} ? @{/unidades-medida/{id}(id=${unidadMedida.idUnidadMedida})} : @{/unidades-medida}"
-          method="post">
-
-      <input type="hidden" th:field="*{idUnidadMedida}">
-
-      <div class="message message-error" role="alert"
-           th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
-
-      <div class="form-field">
-        <label for="codigo">Código</label>
-        <input class="input" type="text" id="codigo" th:field="*{codigo}"
-               maxlength="20" autocomplete="off" required>
-        <p class="form-help">Identificador corto de la unidad. Hasta 20 caracteres.</p>
-        <p class="message message-error" th:if="${#fields.hasErrors('codigo')}"
-           th:errors="*{codigo}"></p>
-      </div>
-
-      <div class="form-field">
-        <label for="nombre">Nombre</label>
-        <input class="input" type="text" id="nombre" th:field="*{nombre}"
-               maxlength="100" autocomplete="off" required>
-        <p class="form-help">Nombre completo de la unidad. Hasta 100 caracteres.</p>
-        <p class="message message-error" th:if="${#fields.hasErrors('nombre')}"
-           th:errors="*{nombre}"></p>
-      </div>
-
-      <div class="form-field">
-        <label for="abreviatura">Abreviatura</label>
-        <input class="input" type="text" id="abreviatura" th:field="*{abreviatura}"
-               maxlength="20" autocomplete="off" required>
-        <p class="form-help">
-          Forma corta que se mostrará junto al producto. Hasta 20 caracteres.
-        </p>
-        <p class="message message-error" th:if="${#fields.hasErrors('abreviatura')}"
-           th:errors="*{abreviatura}"></p>
-      </div>
-
-      <div class="form-field" sec:authorize="hasAnyRole('ADMIN')">
-        <label for="activo">Estado</label>
-        <select class="select" id="activo" th:field="*{activo}">
-          <option value="true">Activa</option>
-          <option value="false">Inactiva</option>
-        </select>
-        <p class="form-help">
-          Una unidad inactiva no se ofrecerá al registrar productos.
-        </p>
-      </div>
-
-      <div class="form-field">
-        <button type="submit" class="button button-primary">Guardar</button>
-        <a class="button button-secondary" th:href="@{/unidades-medida}" href="/unidades-medida">
-          Cancelar
+      <div class="acm-actions">
+        <a class="btn btn-outline-secondary" th:href="@{/unidades-medida}" href="/unidades-medida">
+          Volver al listado
         </a>
       </div>
-    </form>
-  </section>
-</main>
+    </header>
 
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
+
+    <form class="card" th:object="${unidadMedida}"
+          th:action="${unidadMedida.idUnidadMedida != null} ? @{/unidades-medida/{id}(id=${unidadMedida.idUnidadMedida})} : @{/unidades-medida}"
+          method="post">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="alert alert-danger" role="alert"
+                 th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
+          </div>
+
+          <input type="hidden" th:field="*{idUnidadMedida}">
+
+          <div class="col-12 col-md-3">
+            <label class="form-label" for="codigo">Código *</label>
+            <input class="form-control" type="text" id="codigo" th:field="*{codigo}"
+                   maxlength="20" autocomplete="off" required>
+            <p class="acm-help">Hasta 20 caracteres.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('codigo')}"
+               th:errors="*{codigo}"></p>
+          </div>
+
+          <div class="col-12 col-md-5">
+            <label class="form-label" for="nombre">Nombre *</label>
+            <input class="form-control" type="text" id="nombre" th:field="*{nombre}"
+                   maxlength="100" autocomplete="off" required>
+            <p class="acm-help">Nombre completo de la unidad. Hasta 100 caracteres.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('nombre')}"
+               th:errors="*{nombre}"></p>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="abreviatura">Abreviatura *</label>
+            <input class="form-control" type="text" id="abreviatura" th:field="*{abreviatura}"
+                   maxlength="20" autocomplete="off" required>
+            <p class="acm-help">Forma corta que se muestra junto al producto.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('abreviatura')}"
+               th:errors="*{abreviatura}"></p>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="activo">Estado</label>
+            <select class="form-select" id="activo" th:field="*{activo}">
+              <option value="true">Activa</option>
+              <option value="false">Inactiva</option>
+            </select>
+            <p class="acm-help">Una unidad inactiva no se ofrecerá al registrar productos.</p>
+          </div>
+
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/unidades-medida}" href="/unidades-medida">
+              Cancelar
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
 </body>
 </html>

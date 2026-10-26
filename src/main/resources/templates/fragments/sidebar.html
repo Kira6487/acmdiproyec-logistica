@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<a class="skip-link" href="#contenido-principal">Saltar al contenido</a>
+<aside class="acm-sidebar" th:fragment="sidebar(seccionActiva)" aria-label="Navegación del sistema">
+  <a class="acm-brand" th:href="@{/panel}" href="/panel" aria-label="Ir al panel logístico">
+    ACM Diproyec
+    <small>Control logístico del almacén</small>
+  </a>
+
+  <h2 class="acm-sidebar-title">Panel logístico</h2>
+
+  <button type="button" class="acm-sidebar-toggle"
+          data-nav-toggle aria-expanded="false" aria-controls="acm-nav-modulos">
+    <span aria-hidden="true">☰</span> Menú
+  </button>
+
+  <nav class="acm-nav" id="acm-nav-modulos" data-navigation aria-label="Módulos">
+    <a class="acm-nav-link" th:href="@{/panel}" href="/panel"
+       th:attr="aria-current=${seccionActiva == 'panel'} ? 'page' : null"
+       sec:authorize="isAuthenticated()">
+      <span>Panel</span>
+    </a>
+    <a class="acm-nav-link" th:href="@{/inventario}" href="/inventario"
+       th:attr="aria-current=${seccionActiva == 'inventario'} ? 'page' : null"
+       sec:authorize="isAuthenticated()">
+      <span>Existencias</span>
+    </a>
+    <a class="acm-nav-link" th:href="@{/movimientos}" href="/movimientos"
+       th:attr="aria-current=${seccionActiva == 'movimientos'} ? 'page' : null"
+       sec:authorize="isAuthenticated()">
+      <span>Movimientos</span>
+    </a>
+    <a class="acm-nav-link" th:href="@{/productos}" href="/productos"
+       th:attr="aria-current=${seccionActiva == 'productos'} ? 'page' : null"
+       sec:authorize="isAuthenticated()">
+      <span>Productos</span>
+    </a>
+    <a class="acm-nav-link" th:href="@{/categorias}" href="/categorias"
+       th:attr="aria-current=${seccionActiva == 'categorias'} ? 'page' : null"
+       sec:authorize="isAuthenticated()">
+      <span>Categorías</span>
+    </a>
+    <a class="acm-nav-link" th:href="@{/unidades-medida}" href="/unidades-medida"
+       th:attr="aria-current=${seccionActiva == 'unidades'} ? 'page' : null"
+       sec:authorize="isAuthenticated()">
+      <span>Unidades de medida</span>
+    </a>
+    <a class="acm-nav-link" th:href="@{/motivos}" href="/motivos"
+       th:attr="aria-current=${seccionActiva == 'motivos'} ? 'page' : null"
+       sec:authorize="isAuthenticated()">
+      <span>Motivos de movimiento</span>
+    </a>
+    <a class="acm-nav-link" th:href="@{/usuarios}" href="/usuarios"
+       th:attr="aria-current=${seccionActiva == 'usuarios'} ? 'page' : null"
+       sec:authorize="hasAnyRole('ADMIN')">
+      <span>Usuarios</span>
+    </a>
+  </nav>
+
+  <div class="acm-sidebar-footer">
+    <strong sec:authorize="isAuthenticated()" sec:authentication="name">Usuario</strong>
+    <span class="acm-eyebrow" sec:authorize="isAuthenticated()">Sesión iniciada</span>
+    <form sec:authorize="isAuthenticated()" action="/logout" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <button type="submit" class="btn btn-sm btn-outline-secondary">Cerrar sesión</button>
+    </form>
+  </div>
+</aside>
+</body>
+</html>

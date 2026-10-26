@@ -7,6 +7,10 @@ package pe.acmdiproyec.logistica.model;
  */
 public class MotivoMovimiento {
 
+    /** Valores admitidos por el enum {@code public.tipo_movimiento}. */
+    public static final String TIPO_ENTRADA = "ENTRADA";
+    public static final String TIPO_SALIDA = "SALIDA";
+
     private Long idMotivoMovimiento;
     private String codigo;
     private String nombre;

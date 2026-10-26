@@ -1,30 +1,21 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="No fue posible completar la solicitud">
-  <title>No fue posible completar la solicitud</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('No fue posible completar la solicitud')}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('')}"></nav>
+<a class="skip-link" href="#contenido-principal">Saltar al contenido</a>
 
-<main id="contenido-principal" class="error-page container" tabindex="-1">
-  <section class="card error-card" aria-labelledby="error-title">
-    <p class="eyebrow">Sistema Logístico ACM Diproyec</p>
-    <h1 id="error-title">No fue posible completar la solicitud</h1>
-    <p>
-      Ocurrió un inconveniente inesperado. Inténtelo nuevamente más tarde o
-      regrese a la página principal.
-    </p>
-    <a class="button button-primary" th:href="@{/}" href="/">Volver al inicio</a>
-  </section>
+<main class="acm-main" id="contenido-principal" tabindex="-1" style="max-width:42rem;margin:0 auto;">
+  <div class="card mt-5">
+    <div class="card-body" style="text-align:center;padding:2.5rem 1.5rem;">
+      <p class="acm-eyebrow">Sistema Logístico ACM Diproyec</p>
+      <h1 style="font-size:1.75rem;">No fue posible completar la solicitud</h1>
+      <p class="acm-help" style="margin:1rem 0 1.5rem;">
+        Ocurrió un inconveniente inesperado. Inténtelo nuevamente más tarde o
+        regrese a la página principal.
+      </p>
+      <a class="btn btn-primary" th:href="@{/}" href="/">Volver al inicio</a>
+    </div>
+  </div>
 </main>
-
-<footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
 </html>

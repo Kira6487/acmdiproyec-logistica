@@ -1,77 +1,119 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Existencias actuales del almacén">
-  <title>Inventario | ACM Diproyec</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('Existencias del almacén')}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('inventario')}"></nav>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('inventario')}"></aside>
 
-<main id="contenido-principal" tabindex="-1">
-  <section class="container" aria-labelledby="page-title">
-    <div class="page-heading">
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
       <div>
-        <p class="eyebrow">Inventario</p>
-        <h1 id="page-title">Existencias actuales</h1>
-        <p class="hero-description">
-          Stock disponible por producto. El stock lo actualiza la base de datos
-          al registrar cada movimiento.
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li>Existencias</li>
+          </ol>
+        </nav>
+        <h1>Existencias actuales del almacén</h1>
+        <p class="acm-help">
+          Saldo disponible por producto. El stock lo actualiza la base de datos al registrar cada movimiento.
+        </p>
+      </div>
+    </header>
+
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
+
+    <form class="card mb-3" th:action="@{/inventario}" method="get">
+      <div class="card-body">
+        <div class="acm-filters">
+          <div class="form-field">
+            <label class="form-label" for="q">Buscar</label>
+            <input class="form-control" type="search" id="q" name="q"
+                   th:value="${filtroQ}" value="" placeholder="Nombre o código">
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="idCategoria">Categoría</label>
+            <select class="form-select" id="idCategoria" name="idCategoria">
+              <option value="">Todas</option>
+              <option th:each="categoria : ${categorias}"
+                      th:value="${categoria.idCategoria}"
+                      th:selected="${filtroIdCategoria == categoria.idCategoria}"
+                      th:text="${categoria.nombre}">Categoría</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="estado">Estado de stock</label>
+            <select class="form-select" id="estado" name="estado">
+              <option value="">Todos</option>
+              <option value="BAJO" th:selected="${filtroEstado == 'BAJO'}">Stock bajo</option>
+              <option value="NORMAL" th:selected="${filtroEstado == 'NORMAL'}">Normal</option>
+            </select>
+          </div>
+          <div class="acm-filter-actions">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/inventario}" href="/inventario">Limpiar</a>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive" th:if="${!existencias.isEmpty()}">
+          <table class="table">
+            <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Producto</th>
+              <th scope="col">Unidad</th>
+              <th scope="col">Saldo</th>
+              <th scope="col">Mínimo</th>
+              <th scope="col">Nivel</th>
+              <th scope="col">Estado</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="fila : ${existencias}">
+              <td th:text="${fila.producto.codigo}">CEM-001</td>
+              <td th:text="${fila.producto.nombre}">Cemento</td>
+              <td th:text="${fila.producto.unidadMedida.nombre}">Bolsa</td>
+              <td><strong th:text="${fila.stock}">0</strong></td>
+              <td th:text="${fila.producto.stockMinimo}">0</td>
+              <td>
+                <div class="progress"
+                     th:attr="aria-label=${'Nivel de stock de ' + fila.producto.nombre}">
+                  <div class="progress-bar"
+                       th:classappend="${fila.stockBajo} ? 'bg-warning' : ''"
+                       role="progressbar"
+                       th:style="'width:' + ${fila.nivelPorcentaje} + '%'"></div>
+                </div>
+              </td>
+              <td>
+                <span class="badge"
+                      th:classappend="${fila.stockBajo} ? 'acm-badge-warning' : 'acm-badge-success'"
+                      th:text="${fila.stockBajo} ? 'Stock bajo' : 'Normal'">Normal</span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div th:replace="~{fragments/empty-state :: vacio(
+                'Sin existencias que mostrar',
+                'No hay productos que coincidan con los filtros seleccionados.',
+                @{/inventario},
+                'Limpiar filtros')}"
+             th:if="${existencias.isEmpty()}"></div>
+
+        <p class="acm-table-note">
+          Mostrando <span th:text="${#lists.size(existencias)}">0</span> de
+          <span th:text="${#lists.size(existencias)}">0</span> productos ·
+          Saldo = suma neta de movimientos vigentes. Clic en un producto abre su kardex (historial filtrado).
         </p>
       </div>
     </div>
-
-    <div class="message message-success" role="status"
-         th:if="${mensajeExito}" th:text="${mensajeExito}"></div>
-    <div class="message message-error" role="alert"
-         th:if="${mensajeError}" th:text="${mensajeError}"></div>
-
-    <div class="card" th:if="${!existencias.isEmpty()}">
-      <div class="table-responsive">
-        <table class="responsive-table">
-          <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Producto</th>
-            <th scope="col">Categoría</th>
-            <th scope="col">Unidad</th>
-            <th scope="col">Stock actual</th>
-            <th scope="col">Stock mínimo</th>
-            <th scope="col">Estado</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr th:each="fila : ${existencias}">
-            <td th:text="${fila.producto.codigo}">DADO-2CM</td>
-            <td th:text="${fila.producto.nombre}">Dado separador de 2 cm</td>
-            <td th:text="${fila.producto.categoria.nombre}">Dados</td>
-            <td th:text="${fila.producto.unidadMedida.abreviatura}">und</td>
-            <td th:text="${fila.stock}">100.000</td>
-            <td th:text="${fila.producto.stockMinimo}">20.000</td>
-            <td>
-                <span class="badge"
-                      th:classappend="${fila.stock <= fila.producto.stockMinimo} ? 'badge-warning' : 'badge-success'"
-                      th:text="${fila.stock <= fila.producto.stockMinimo} ? 'Bajo mínimo' : 'Normal'">Normal</span>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="empty-state card" th:if="${existencias.isEmpty()}">
-      <h2>No hay existencias registradas</h2>
-      <p>Las existencias aparecerán aquí cuando se registren productos y movimientos.</p>
-    </div>
-  </section>
-</main>
-
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+  </main>
+</div>
 </body>
 </html>

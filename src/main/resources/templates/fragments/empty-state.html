@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<div class="acm-empty" th:fragment="vacio(titulo, texto, enlace, textoEnlace)">
+  <h2 th:text="${titulo}">Sin registros</h2>
+  <p th:text="${texto}">Aún no hay información que mostrar.</p>
+  <a class="btn btn-primary" sec:authorize="hasAnyRole('ADMIN')"
+     th:if="${enlace != null}" th:href="${enlace}"
+     href="#" th:text="${textoEnlace}">Acción</a>
+</div>
+</body>
+</html>

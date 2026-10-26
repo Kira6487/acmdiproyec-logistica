@@ -1,0 +1,511 @@
+@startuml backend-class-diagram
+title Diagrama de clases general — Backend ACM Diproyec Logística
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty members
+
+' ============================================================
+' Capa de presentación
+' ============================================================
+package "pe.acmdiproyec.logistica.controller.web" <<Controlador>> {
+
+  class AuthController {
+    +login() : String
+  }
+
+  class IndexController {
+    +mostrarInicio() : String
+  }
+
+  class HomeController {
+    +inicio() : String
+  }
+
+  class CategoriaController {
+    -categoriaService : CategoriaService
+    +listar(Model) : String
+    +nuevo(Model) : String
+    +crear(CategoriaFormDto, BindingResult, Model, RedirectAttributes) : String
+    +editar(Long, Model, RedirectAttributes) : String
+    +actualizar(Long, CategoriaFormDto, BindingResult, Model, RedirectAttributes) : String
+    +eliminar(Long, RedirectAttributes) : String
+  }
+
+  class UnidadMedidaController {
+    -unidadMedidaService : UnidadMedidaService
+    +listar(Model) : String
+    +nuevo(Model) : String
+    +crear(UnidadMedidaFormDto, BindingResult, Model, RedirectAttributes) : String
+    +editar(Long, Model, RedirectAttributes) : String
+    +actualizar(Long, UnidadMedidaFormDto, BindingResult, Model, RedirectAttributes) : String
+    +eliminar(Long, RedirectAttributes) : String
+  }
+
+  class ProductoController {
+    -productoService : ProductoService
+    -categoriaService : CategoriaService
+    -unidadMedidaService : UnidadMedidaService
+    +listar(Model) : String
+    +nuevo(Model) : String
+    +crear(ProductoFormDto, BindingResult, Model, RedirectAttributes) : String
+    +editar(Long, Model, RedirectAttributes) : String
+    +actualizar(Long, ProductoFormDto, BindingResult, Model, RedirectAttributes) : String
+    +eliminar(Long, RedirectAttributes) : String
+  }
+
+  class MotivoMovimientoController {
+    -motivoMovimientoService : MotivoMovimientoService
+    +listar(Model) : String
+    +nuevo(Model) : String
+    +crear(MotivoMovimientoFormDto, BindingResult, Model, RedirectAttributes) : String
+    +editar(Long, Model, RedirectAttributes) : String
+    +actualizar(Long, MotivoMovimientoFormDto, BindingResult, Model, RedirectAttributes) : String
+    +eliminar(Long, RedirectAttributes) : String
+  }
+
+  class MovimientoController {
+    -movimientoService : MovimientoService
+    -inventarioService : InventarioService
+    +listar(Long, String, String, String, String, Model) : String
+    +nuevo(String, Model, RedirectAttributes) : String
+    +crear(String, MovimientoFormDto, BindingResult, Model, Principal, RedirectAttributes) : String
+    +detalle(Long, Model, RedirectAttributes) : String
+    +anular(Long, AnulacionMovimientoFormDto, BindingResult, Model, Principal, RedirectAttributes) : String
+  }
+
+  class InventarioController {
+    -inventarioService : InventarioService
+    +listar(Model) : String
+  }
+
+  class UsuarioController {
+    -usuarioService : UsuarioService
+    +listar(Model) : String
+    +nuevo(Model) : String
+    +crear(UsuarioFormDto) : String
+    +detalle(Long, Model) : String
+    +editar(Long, Model) : String
+    +actualizar(Long, UsuarioFormDto) : String
+    +desactivar(Long) : String
+  }
+}
+
+' ============================================================
+' Capa de aplicación (servicios)
+' ============================================================
+package "pe.acmdiproyec.logistica.service" <<Servicio>> {
+
+  class CategoriaService {
+    -categoriaDao : CategoriaDao
+    +listarTodas() : List<Categoria>
+    +obtenerFormulario(Long) : CategoriaFormDto
+    +crear(CategoriaFormDto) : void
+    +actualizar(Long, CategoriaFormDto) : void
+    +eliminar(Long) : void
+    +buscarCategoria(Long) : Categoria
+  }
+
+  class UnidadMedidaService {
+    -unidadMedidaDao : UnidadMedidaDao
+    +listarTodas() : List<UnidadMedida>
+    +obtenerFormulario(Long) : UnidadMedidaFormDto
+    +crear(UnidadMedidaFormDto) : void
+    +actualizar(Long, UnidadMedidaFormDto) : void
+    +eliminar(Long) : void
+    +buscarUnidadMedida(Long) : UnidadMedida
+  }
+
+  class ProductoService {
+    -productoDao : ProductoDao
+    -categoriaDao : CategoriaDao
+    -unidadMedidaDao : UnidadMedidaDao
+    +listarTodos() : List<Producto>
+    +obtenerFormulario(Long) : ProductoFormDto
+    +crear(ProductoFormDto) : void
+    +actualizar(Long, ProductoFormDto) : void
+    +eliminar(Long) : void
+    +buscarProducto(Long) : Producto
+  }
+
+  class MotivoMovimientoService {
+    -motivoMovimientoDao : MotivoMovimientoDao
+    +listarTodos() : List<MotivoMovimiento>
+    +listarPorTipo(String) : List<MotivoMovimiento>
+    +obtenerFormulario(Long) : MotivoMovimientoFormDto
+    +crear(MotivoMovimientoFormDto) : void
+    +actualizar(Long, MotivoMovimientoFormDto) : void
+    +eliminar(Long) : void
+    +buscarMotivo(Long) : MotivoMovimiento
+  }
+
+  class MovimientoService {
+    +{static} TIPO_ENTRADA : String
+    +{static} TIPO_SALIDA : String
+    +{static} ESTADO_VIGENTE : String
+    +{static} ESTADO_ANULADO : String
+    -movimientoDao : MovimientoDao
+    -motivoMovimientoDao : MotivoMovimientoDao
+    -productoDao : ProductoDao
+    -usuarioDao : UsuarioDao
+    +listarMovimientos(Long, String, String, String, String) : List<Movimiento>
+    +obtenerMovimiento(Long) : Movimiento
+    +listarMotivosPorTipo(String) : List<MotivoMovimiento>
+    +registrar(MovimientoFormDto, String) : Long
+    +anular(Long, String, String) : void
+  }
+
+  class InventarioService {
+    -inventarioDao : InventarioDao
+    +listarTodo() : List<Inventario>
+  }
+
+  class UsuarioService {
+    -usuarioDao : UsuarioDao
+    -passwordEncoder : PasswordEncoder
+    +crearUsuario(Usuario, String) : void
+    +actualizarUsuario(Usuario, String) : void
+    +desactivarUsuario(Long) : void
+    +listarUsuarios() : List<UsuarioResponseDto>
+    +buscarUsuario(Long) : Usuario
+    +listarRolesActivos() : List<Rol>
+    +crearDesdeFormulario(UsuarioFormDto) : void
+    +actualizarDesdeFormulario(Long, UsuarioFormDto) : void
+  }
+
+  class AutenticacionService {
+    -usuarioDao : UsuarioDao
+    +buscarUsuarioActivo(String) : Usuario
+  }
+}
+
+' ============================================================
+' Capa de persistencia
+' ============================================================
+package "pe.acmdiproyec.logistica.dao" <<Interfaz>> {
+  interface CategoriaDao {
+    +listarTodas() : List<Categoria>
+    +buscarPorId(Long) : Optional<Categoria>
+    +guardar(Categoria) : int
+    +actualizar(Categoria) : int
+    +eliminar(Long) : int
+    +contarPorCodigo(String, Long) : int
+    +contarPorNombre(String, Long) : int
+    +contarProductosAsociados(Long) : long
+  }
+
+  interface UnidadMedidaDao {
+    +listarTodas() : List<UnidadMedida>
+    +buscarPorId(Long) : Optional<UnidadMedida>
+    +guardar(UnidadMedida) : int
+    +actualizar(UnidadMedida) : int
+    +eliminar(Long) : int
+    +contarPorCodigo(String, Long) : int
+    +contarPorNombre(String, Long) : int
+    +contarPorAbreviatura(String, Long) : int
+    +contarProductosAsociados(Long) : long
+  }
+
+  interface ProductoDao {
+    +listarTodos() : List<Producto>
+    +buscarPorId(Long) : Optional<Producto>
+    +guardar(Producto) : int
+    +actualizar(Producto) : int
+    +eliminar(Long) : int
+    +contarPorCodigo(String, Long) : int
+    +contarPorNombre(String, Long) : int
+    +contarMovimientosAsociados(Long) : long
+    +obtenerStockActual(Long) : BigDecimal
+  }
+
+  interface MotivoMovimientoDao {
+    +listarTodos() : List<MotivoMovimiento>
+    +listarPorTipo(String) : List<MotivoMovimiento>
+    +buscarPorId(Long) : Optional<MotivoMovimiento>
+    +guardar(MotivoMovimiento) : int
+    +actualizar(MotivoMovimiento) : int
+    +eliminar(Long) : int
+    +contarPorCodigo(String, Long) : int
+    +contarPorNombreYTipo(String, String, Long) : int
+    +contarMovimientosAsociados(Long) : long
+  }
+
+  interface MovimientoDao {
+    +listarTodos(Long, String, String, OffsetDateTime, OffsetDateTime) : List<Movimiento>
+    +buscarPorId(Long) : Optional<Movimiento>
+    +listarDetalles(Long) : List<MovimientoDetalle>
+    +guardar(Movimiento) : Long
+    +guardarDetalle(MovimientoDetalle) : int
+    +anular(Long, Long, String) : int
+  }
+
+  interface InventarioDao {
+    +listarTodo() : List<Inventario>
+  }
+
+  interface UsuarioDao {
+    +buscarPorCorreo(String) : Optional<Usuario>
+    +buscarPorId(Long) : Optional<Usuario>
+    +listarTodos() : List<Usuario>
+    +listarRolesActivos() : List<Rol>
+    +guardar(Usuario) : int
+    +actualizar(Usuario) : int
+    +desactivar(Long) : int
+  }
+}
+
+package "pe.acmdiproyec.logistica.dao.impl" <<JDBC>> {
+  class JdbcCategoriaDao
+  class JdbcUnidadMedidaDao
+  class JdbcProductoDao
+  class JdbcMotivoMovimientoDao
+  class JdbcMovimientoDao
+  class JdbcInventarioDao
+  class JdbcUsuarioDao
+
+  note bottom of JdbcMovimientoDao
+    Nunca escribe sobre **inventario**:
+    el stock lo mantiene el trigger
+    trg_movimiento_detalle_aplicar_inventario.
+  end note
+}
+
+' ============================================================
+' Seguridad, configuración y errores
+' ============================================================
+package "pe.acmdiproyec.logistica.security" <<Seguridad>> {
+  class SecurityConfig {
+    +passwordEncoder() : PasswordEncoder
+    +securityFilterChain(HttpSecurity) : SecurityFilterChain
+  }
+
+  class CustomUserDetailsService {
+    -autenticacionService : AutenticacionService
+    +loadUserByUsername(String) : UserDetails
+  }
+}
+
+package "pe.acmdiproyec.logistica.exception" <<Error>> {
+  class GlobalExceptionHandler {
+    +manejarRecursoNoEncontrado(NoResourceFoundException, HttpServletResponse) : ModelAndView
+    +manejarRegistroNoEncontrado(RecursoNoEncontradoException, HttpServletResponse) : ModelAndView
+    +manejarReglaDeNegocio(ReglaNegocioException, HttpServletResponse) : ModelAndView
+    +manejarMetodoNoSoportado(HttpRequestMethodNotSupportedException, HttpServletResponse) : ModelAndView
+    +manejarArgumentoConTipoInvalido(MethodArgumentTypeMismatchException, HttpServletResponse) : ModelAndView
+    +manejarParametroAusente(MissingServletRequestParameterException, HttpServletResponse) : ModelAndView
+    +manejarErrorInesperado(Exception, HttpServletResponse) : ModelAndView
+  }
+
+  class RecursoNoEncontradoException {
+    +RecursoNoEncontradoException(String)
+  }
+
+  class ReglaNegocioException {
+    +ReglaNegocioException(String)
+  }
+
+  class RuntimeException <<ext>>
+}
+
+' ============================================================
+' Capa de transferencia de datos
+' ============================================================
+package "pe.acmdiproyec.logistica.dto" <<DTO>> {
+
+  class CategoriaFormDto {
+    -idCategoria : Long
+    -codigo : String
+    -nombre : String
+    -descripcion : String
+    -activo : boolean
+  }
+
+  class UnidadMedidaFormDto {
+    -idUnidadMedida : Long
+    -codigo : String
+    -nombre : String
+    -abreviatura : String
+    -activo : boolean
+  }
+
+  class ProductoFormDto {
+    -idProducto : Long
+    -idCategoria : Long
+    -idUnidadMedida : Long
+    -codigo : String
+    -nombre : String
+    -descripcion : String
+    -stockMinimo : BigDecimal
+    -activo : boolean
+  }
+
+  class MotivoMovimientoFormDto {
+    -idMotivoMovimiento : Long
+    -codigo : String
+    -nombre : String
+    -tipo : String
+    -descripcion : String
+    -activo : boolean
+  }
+
+  class MovimientoFormDto {
+    -idMotivoMovimiento : Long
+    -observacion : String
+    -lineas : List<MovimientoDetalleFormDto>
+  }
+
+  class MovimientoDetalleFormDto {
+    -idProducto : Long
+    -cantidad : BigDecimal
+  }
+
+  class AnulacionMovimientoFormDto {
+    -motivoAnulacion : String
+  }
+
+  class UsuarioFormDto {
+    -idRol : Long
+    -codigo : String
+    -nombres : String
+    -apellidos : String
+    -correo : String
+    -password : String
+    -activo : boolean
+  }
+
+  class UsuarioResponseDto {
+    -idUsuario : Long
+    -codigo : String
+    -nombres : String
+    -apellidos : String
+    -correo : String
+    -rolCodigo : String
+    -rolNombre : String
+    -activo : boolean
+  }
+
+  class LoginDto {
+    -correo : String
+    -password : String
+  }
+
+  note bottom of LoginDto
+    **Sin uso**: ninguna clase lo referencia.
+    Se conserva en el repositorio sin eliminarlo.
+  end note
+}
+
+' ============================================================
+' Arranque de la aplicación
+' ============================================================
+package "pe.acmdiproyec.logistica" <<Arranque>> {
+  class LogisticaApplication {
+    +{static} main(String[]) : void
+  }
+}
+
+' ============================================================
+' Relaciones entre capas
+' ============================================================
+CategoriaController --> CategoriaService
+UnidadMedidaController --> UnidadMedidaService
+ProductoController --> ProductoService
+ProductoController --> CategoriaService
+ProductoController --> UnidadMedidaService
+MotivoMovimientoController --> MotivoMovimientoService
+MovimientoController --> MovimientoService
+MovimientoController --> InventarioService
+InventarioController --> InventarioService
+UsuarioController --> UsuarioService
+AuthController ..> CustomUserDetailsService : autentica mediante
+
+CategoriaService --> CategoriaDao
+UnidadMedidaService --> UnidadMedidaDao
+ProductoService --> ProductoDao
+ProductoService --> CategoriaDao
+ProductoService --> UnidadMedidaDao
+MotivoMovimientoService --> MotivoMovimientoDao
+MovimientoService --> MovimientoDao
+MovimientoService --> MotivoMovimientoDao
+MovimientoService --> ProductoDao
+MovimientoService --> UsuarioDao
+InventarioService --> InventarioDao
+UsuarioService --> UsuarioDao
+AutenticacionService --> UsuarioDao
+CustomUserDetailsService --> AutenticacionService
+
+JdbcCategoriaDao ..|> CategoriaDao
+JdbcUnidadMedidaDao ..|> UnidadMedidaDao
+JdbcProductoDao ..|> ProductoDao
+JdbcMotivoMovimientoDao ..|> MotivoMovimientoDao
+JdbcMovimientoDao ..|> MovimientoDao
+JdbcInventarioDao ..|> InventarioDao
+JdbcUsuarioDao ..|> UsuarioDao
+
+JdbcCategoriaDao --> "1" JdbcTemplate
+JdbcUnidadMedidaDao --> "1" JdbcTemplate
+JdbcProductoDao --> "1" JdbcTemplate
+JdbcMotivoMovimientoDao --> "1" JdbcTemplate
+JdbcMovimientoDao --> "1" JdbcTemplate
+JdbcInventarioDao --> "1" JdbcTemplate
+JdbcUsuarioDao --> "1" JdbcTemplate
+
+RecursoNoEncontradoException --|> RuntimeException
+ReglaNegocioException --|> RuntimeException
+GlobalExceptionHandler ..> RecursoNoEncontradoException
+GlobalExceptionHandler ..> ReglaNegocioException
+
+SecurityConfig ..> PasswordEncoder : define bean
+UsuarioService --> PasswordEncoder
+CustomUserDetailsService ..|> UserDetailsService
+
+' ============================================================
+' Relaciones con la capa de transferencia (DTO)
+' ============================================================
+CategoriaController ..> CategoriaFormDto : recibe en formularios
+UnidadMedidaController ..> UnidadMedidaFormDto : recibe en formularios
+ProductoController ..> ProductoFormDto : recibe en formularios
+MotivoMovimientoController ..> MotivoMovimientoFormDto : recibe en formularios
+MovimientoController ..> MovimientoFormDto : recibe en formularios
+MovimientoController ..> AnulacionMovimientoFormDto : recibe en formularios
+UsuarioController ..> UsuarioFormDto : recibe en formularios
+
+MovimientoFormDto "1" o-- "*" MovimientoDetalleFormDto : lineas
+
+CategoriaService ..> CategoriaFormDto : convierte
+UnidadMedidaService ..> UnidadMedidaFormDto : convierte
+ProductoService ..> ProductoFormDto : convierte
+MotivoMovimientoService ..> MotivoMovimientoFormDto : convierte
+MovimientoService ..> MovimientoFormDto : convierte
+MovimientoService ..> AnulacionMovimientoFormDto : recibe motivo
+MovimientoService ..> MovimientoDetalleFormDto : lee lineas
+UsuarioService ..> UsuarioFormDto : convierte
+UsuarioService ..> UsuarioResponseDto : produce en listados
+
+CategoriaService ..> Categoria
+UnidadMedidaService ..> UnidadMedida
+ProductoService ..> Producto
+MotivoMovimientoService ..> MotivoMovimiento
+MovimientoService ..> Movimiento
+MovimientoService ..> MovimientoDetalle
+InventarioService ..> Inventario
+UsuarioService ..> Usuario
+UsuarioService ..> Rol
+
+LogisticaApplication ..> SecurityConfig : arranca contexto
+LogisticaApplication ..> GlobalExceptionHandler : arranca contexto
+
+note as N_MODELOS
+  **Modelos de dominio** (`pe.acmdiproyec.logistica.model`)
+
+  Los 9 modelos — `Rol`, `Usuario`, `Categoria`,
+  `UnidadMedida`, `MotivoMovimiento`, `Producto`,
+  `Inventario`, `Movimiento`, `MovimientoDetalle` —
+  se documentan con **atributos y multiplicidades**
+  en `backend-domain-model.puml` para mantener este
+  diagrama legible. Aquí aparecen como destino de
+  las relaciones de cada servicio y DAO.
+end note
+
+@enduml

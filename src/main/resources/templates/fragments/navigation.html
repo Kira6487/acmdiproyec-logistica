@@ -29,6 +29,10 @@
          th:attr="aria-current=${seccionActiva == 'productos'} ? 'page' : null">
         Productos
       </a>
+      <a th:href="@{/motivos}" href="/motivos" sec:authorize="isAuthenticated()"
+         th:attr="aria-current=${seccionActiva == 'motivos'} ? 'page' : null">
+        Motivos
+      </a>
       <a th:href="@{/inventario}" href="/inventario" sec:authorize="isAuthenticated()"
          th:attr="aria-current=${seccionActiva == 'inventario'} ? 'page' : null">
         Inventario

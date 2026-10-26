@@ -202,6 +202,29 @@ public class JdbcMovimientoDao implements MovimientoDao {
                 detalle.getCantidad());
     }
 
+    /**
+     * Anulacion condicional del movimiento.
+     *
+     * La clausula {@code where estado = 'VIGENTE'} es la que impide una doble
+     * anulacion: si otro proceso ya anulo el movimiento, la sentencia no
+     * modifica ninguna fila y el servicio lo detecta. Al cambiar el estado, el
+     * disparador {@code trg_movimientos_revertir_anulacion} revierte el stock en
+     * {@code inventario}; esta clase no interviene en ese calculo.
+     */
+    @Override
+    public int anular(Long idMovimiento, Long idUsuarioAnulacion, String motivoAnulacion) {
+        String sql = """
+            update movimientos
+               set estado = 'ANULADO',
+                   id_usuario_anulacion = ?,
+                   fecha_anulacion = now(),
+                   motivo_anulacion = ?
+             where id_movimiento = ?
+               and estado = 'VIGENTE'
+            """;
+        return jdbcTemplate.update(sql, idUsuarioAnulacion, motivoAnulacion, idMovimiento);
+    }
+
     private Movimiento mapearMovimiento(java.sql.ResultSet rs) throws java.sql.SQLException {
         MotivoMovimiento motivo = new MotivoMovimiento();
         motivo.setIdMotivoMovimiento(rs.getLong("id_motivo_movimiento"));

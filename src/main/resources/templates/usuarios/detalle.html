@@ -1,24 +1,69 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="/css/Usuarios.css">
-    <title>Detalle de usuario | ACM Diproyec</title>
-</head>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head('Detalle del usuario')}"></head>
 <body>
-    <main class="usuario-card">
-        <h1>Detalle de usuario</h1>
-        <div class="usuario-detail">
-            <p>Código: <strong th:text="${usuario.codigo}"></strong></p>
-            <p>Nombre: <strong th:text="${usuario.nombres + ' ' + usuario.apellidos}"></strong></p>
-            <p>Correo: <strong th:text="${usuario.correo}"></strong></p>
-            <p>Rol: <strong th:text="${usuario.rol.nombre}"></strong></p>
-            <p>Estado: <strong th:text="${usuario.activo ? 'Activo' : 'Inactivo'}"></strong></p>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('usuarios')}"></aside>
+
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
+      <div>
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li><a th:href="@{/usuarios}" href="/usuarios">Usuarios</a></li>
+            <li th:text="${usuario.nombres}">Usuario</li>
+          </ol>
+        </nav>
+        <h1 th:text="${usuario.nombres + ' ' + usuario.apellidos}">Nombre Apellido</h1>
+        <p class="acm-help">Datos de la cuenta y estado de acceso al sistema.</p>
+      </div>
+      <div class="acm-actions">
+        <a class="btn btn-outline-secondary" th:href="@{/usuarios}" href="/usuarios">Volver al listado</a>
+        <a class="btn btn-primary" th:href="@{/usuarios/{id}/editar(id=${usuario.idUsuario})}"
+           href="/usuarios/1/editar">Editar</a>
+      </div>
+    </header>
+
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table">
+            <tbody>
+            <tr>
+              <th scope="row">Código</th>
+              <td th:text="${usuario.codigo}">USR-001</td>
+            </tr>
+            <tr>
+              <th scope="row">Correo electrónico</th>
+              <td th:text="${usuario.correo}">usuario@acmdiproyec.test</td>
+            </tr>
+            <tr>
+              <th scope="row">Rol</th>
+              <td>
+                <span class="badge acm-badge-neutral" th:text="${usuario.rol?.nombre} ?: 'Sin rol'">Rol</span>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Estado</th>
+              <td>
+                <span class="badge"
+                      th:classappend="${usuario.activo} ? 'acm-badge-success' : 'acm-badge-neutral'"
+                      th:text="${usuario.activo} ? 'Activo' : 'Inactivo'">Activo</span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="usuario-actions">
-            <a class="usuarios-button" th:href="@{/usuarios/{id}/editar(id=${usuario.idUsuario})}">Editar</a>
-            <a class="usuarios-link" th:href="@{/usuarios}">Volver</a>
-        </div>
-    </main>
+        <p class="acm-table-note">
+          La contraseña no se muestra por motivos de seguridad.
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
 </body>
 </html>

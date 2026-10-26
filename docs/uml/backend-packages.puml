@@ -1,0 +1,162 @@
+@startuml backend-packages
+title Paquetes y dependencias entre capas — Backend ACM Diproyec Logística
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 50
+
+package "Presentación" <<Capa>> {
+  package "pe.acmdiproyec.logistica.controller.web" as WEB {
+    [AuthController]
+    [IndexController]
+    [HomeController]
+    [CategoriaController]
+    [UnidadMedidaController]
+    [ProductoController]
+    [MotivoMovimientoController]
+    [MovimientoController]
+    [InventarioController]
+    [UsuarioController]
+  }
+
+  package "pe.acmdiproyec.logistica.controller.api" as API {
+    [paquete reservado\npara futuros REST\n— sin clases —]
+  }
+}
+
+package "Aplicación" <<Capa>> {
+  package "pe.acmdiproyec.logistica.service" as SVC {
+    [CategoriaService]
+    [UnidadMedidaService]
+    [ProductoService]
+    [MotivoMovimientoService]
+    [MovimientoService]
+    [InventarioService]
+    [UsuarioService]
+    [AutenticacionService]
+  }
+}
+
+package "Persistencia" <<Capa>> {
+  package "pe.acmdiproyec.logistica.dao" as DAO {
+    [CategoriaDao]
+    [UnidadMedidaDao]
+    [ProductoDao]
+    [MotivoMovimientoDao]
+    [MovimientoDao]
+    [InventarioDao]
+    [UsuarioDao]
+  }
+
+  package "pe.acmdiproyec.logistica.dao.impl" as IMPL {
+    [JdbcCategoriaDao]
+    [JdbcUnidadMedidaDao]
+    [JdbcProductoDao]
+    [JdbcMotivoMovimientoDao]
+    [JdbcMovimientoDao]
+    [JdbcInventarioDao]
+    [JdbcUsuarioDao]
+  }
+}
+
+package "Dominio" <<Capa>> {
+  package "pe.acmdiproyec.logistica.model" as MODEL {
+    [Rol]
+    [Usuario]
+    [Categoria]
+    [UnidadMedida]
+    [MotivoMovimiento]
+    [Producto]
+    [Inventario]
+    [Movimiento]
+    [MovimientoDetalle]
+  }
+}
+
+package "Transferencia" <<Capa>> {
+  package "pe.acmdiproyec.logistica.dto" as DTO {
+    [CategoriaFormDto]
+    [UnidadMedidaFormDto]
+    [ProductoFormDto]
+    [MotivoMovimientoFormDto]
+    [MovimientoFormDto]
+    [MovimientoDetalleFormDto]
+    [AnulacionMovimientoFormDto]
+    [UsuarioFormDto]
+    [UsuarioResponseDto]
+    [LoginDto\n— sin uso —]
+  }
+}
+
+package "Infraestructura transversal" <<Capa>> {
+  package "pe.acmdiproyec.logistica.security" as SEC {
+    [SecurityConfig]
+    [CustomUserDetailsService]
+  }
+
+  package "pe.acmdiproyec.logistica.exception" as EXC {
+    [GlobalExceptionHandler]
+    [RecursoNoEncontradoException]
+    [ReglaNegocioException]
+  }
+
+  package "pe.acmdiproyec.logistica.config" as CFG {
+    [solo package-info]
+  }
+
+  package "pe.acmdiproyec.logistica.util" as UTIL {
+    [solo package-info]
+  }
+}
+
+package "Arranque" {
+  package "pe.acmdiproyec.logistica" as ROOT {
+    [LogisticaApplication]
+  }
+}
+
+' ============================================================
+' Dirección de dependencias: hacia las capas inferiores
+' ============================================================
+WEB -down-> SVC : delega la lógica\n(controlador sin SQL)
+WEB -right-> DTO : enlaza formularios
+WEB ..> EXC : traduce errores
+WEB ..> SEC : reglas por ruta
+
+SVC -down-> DAO : coordina acceso a datos
+SVC -right-> DTO : transforma formularios
+SVC -right-> MODEL : opera con dominio
+SVC ..> EXC : lanza errores de negocio
+
+IMPL -up-> DAO : implementa la interfaz
+IMPL -right-> MODEL : construye entidades
+DAO -right-> MODEL : declara operaciones
+
+SEC -left-> SVC : resuelve usuario y contraseña
+SEC ..> EXC : maneja fallos de acceso
+ROOT ..> WEB : arranca el contexto
+ROOT ..> SEC : activa la seguridad
+
+note as N1
+  **Reglas de dependencia verificadas en el código**
+
+  * `controller.web` no contiene SQL ni lógica de negocio.
+  * `service` centraliza reglas y transacciones.
+  * `dao` es interfaz; `dao.impl` es la única capa con SQL.
+  * `model` y `dto` no dependen de ninguna otra capa.
+  * No existen dependencias circulares.
+end note
+
+note as N2
+  **Enums de base de datos representados como String**
+
+  `tipo_movimiento` (ENTRADA | SALIDA) y
+  `estado_movimiento` (VIGENTE | ANULADO)
+  son tipos ENUM de PostgreSQL; la capa Java
+  los transporta como `String`.
+  Los valores válidos se declaran como constantes
+  en `MotivoMovimiento` y `MovimientoService`.
+end note
+
+@enduml

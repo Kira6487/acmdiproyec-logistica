@@ -3,16 +3,21 @@ package pe.acmdiproyec.logistica.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -326,6 +331,188 @@ class MovimientoServiceTest {
                 .isInstanceOf(RecursoNoEncontradoException.class);
     }
 
+    // ---------------------------------------------------------- anulacion
+
+    @Test
+    void anularDebeAnularUnMovimientoVigente() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("VIGENTE")));
+        when(movimientoDao.anular(9L, 3L, "Error de captura")).thenReturn(1);
+
+        movimientoService.anular(9L, "Error de captura", CORREO);
+
+        verify(movimientoDao).anular(9L, 3L, "Error de captura");
+    }
+
+    @Test
+    void anularDebeRegistrarElUsuarioQueAnula() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("VIGENTE")));
+        when(movimientoDao.anular(anyLong(), anyLong(), any())).thenReturn(1);
+
+        movimientoService.anular(9L, "Motivo", CORREO);
+
+        verify(movimientoDao).anular(eq(9L), eq(3L), eq("Motivo"));
+    }
+
+    @Test
+    void anularDebePersistirElMotivoSinEspaciosDeMas() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("VIGENTE")));
+        when(movimientoDao.anular(anyLong(), anyLong(), any())).thenReturn(1);
+
+        movimientoService.anular(9L, "   Error de captura   ", CORREO);
+
+        verify(movimientoDao).anular(eq(9L), eq(3L), eq("Error de captura"));
+    }
+
+    @Test
+    void anularDebeRechazarUnMotivoVacioONulo() {
+        for (String motivo : new String[] { null, "", "   " }) {
+            assertThatThrownBy(() -> movimientoService.anular(9L, motivo, CORREO))
+                    .isInstanceOf(ReglaNegocioException.class)
+                    .hasMessageContaining("motivo");
+        }
+        verify(movimientoDao, never()).anular(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void anularDebeRechazarUnMotivoMayorDe500Caracteres() {
+        assertThatThrownBy(() -> movimientoService.anular(9L, "X".repeat(501), CORREO))
+                .isInstanceOf(ReglaNegocioException.class)
+                .hasMessageContaining("500");
+        verify(movimientoDao, never()).anular(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void anularDebeFallarCuandoElMovimientoNoExiste() {
+        when(movimientoDao.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> movimientoService.anular(99L, "Motivo", CORREO))
+                .isInstanceOf(RecursoNoEncontradoException.class)
+                .hasMessageContaining("no existe");
+        verify(movimientoDao, never()).anular(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void anularDebeRechazarUnMovimientoYaAnulado() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("ANULADO")));
+
+        assertThatThrownBy(() -> movimientoService.anular(9L, "Motivo", CORREO))
+                .isInstanceOf(ReglaNegocioException.class)
+                .hasMessageContaining("ya fue anulado");
+        verify(movimientoDao, never()).anular(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void anularDebeEvitarUnaSegundaTransicionDeEstado() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("VIGENTE")));
+        when(movimientoDao.anular(anyLong(), anyLong(), any())).thenReturn(1);
+
+        movimientoService.anular(9L, "Primer motivo", CORREO);
+
+        // El movimiento ya no esta vigente: no se vuelve a invocar la
+        // actualizacion y, por tanto, el stock no se revierte dos veces.
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("ANULADO")));
+        assertThatThrownBy(() -> movimientoService.anular(9L, "Segundo motivo", CORREO))
+                .isInstanceOf(ReglaNegocioException.class);
+
+        verify(movimientoDao, times(1)).anular(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void anularDebeDetectarUnaAnulacionConcurrente() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("VIGENTE")));
+        // La actualizacion condicional no modifica filas: otro proceso anulo antes.
+        when(movimientoDao.anular(anyLong(), anyLong(), any())).thenReturn(0);
+
+        assertThatThrownBy(() -> movimientoService.anular(9L, "Motivo", CORREO))
+                .isInstanceOf(ReglaNegocioException.class)
+                .hasMessageContaining("dos veces");
+    }
+
+    @Test
+    void anularDebeTraducirUnFalloDePersistencia() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("VIGENTE")));
+        when(movimientoDao.anular(anyLong(), anyLong(), any()))
+                .thenThrow(new DataIntegrityViolationException("fk"));
+
+        assertThatThrownBy(() -> movimientoService.anular(9L, "Motivo", CORREO))
+                .isInstanceOf(ReglaNegocioException.class)
+                .hasMessageContaining("No se pudo anular");
+    }
+
+    @Test
+    void anularDebeRechazarUnUsuarioInexistente() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("VIGENTE")));
+        when(usuarioDao.buscarPorCorreo(CORREO)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> movimientoService.anular(9L, "Motivo", CORREO))
+                .isInstanceOf(ReglaNegocioException.class)
+                .hasMessageContaining("usuario");
+        verify(movimientoDao, never()).anular(anyLong(), anyLong(), any());
+    }
+
+    /**
+     * La anulacion debe ejecutarse en una sola transaccion: no puede quedar un
+     * cambio de estado parcialmente aplicado.
+     */
+    @Test
+    void anularDebeSerTransaccional() throws Exception {
+        Method metodo = MovimientoService.class
+                .getDeclaredMethod("anular", Long.class, String.class, String.class);
+
+        assertThat(metodo.isAnnotationPresent(Transactional.class))
+                .as("La anulacion debe ser transaccional")
+                .isTrue();
+    }
+
+    /**
+     * El servicio no puede escribir en {@code inventario}: no posee ningun
+     * manejador JDBC ni acceso al DAO de inventario. La reversión del stock es
+     * responsabilidad exclusiva del disparador de la base de datos.
+     */
+    @Test
+    void anularNoPuedeEscribirDirectamenteEnInventario() {
+        Set<Class<?>> tiposProhibidos = Set.of(
+                org.springframework.jdbc.core.JdbcTemplate.class,
+                org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate.class,
+                javax.sql.DataSource.class,
+                pe.acmdiproyec.logistica.dao.InventarioDao.class);
+
+        for (Field campo : MovimientoService.class.getDeclaredFields()) {
+            assertThat(tiposProhibidos.contains(campo.getType()))
+                    .as("MovimientoService no debe depender de " + campo.getType().getSimpleName())
+                    .isFalse();
+        }
+    }
+
+    /** La anulacion no debe provocar ninguna escritura adicional no prevista. */
+    @Test
+    void anularNoDebeRealizarEscriturasAdicionales() {
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimientoConEstado("VIGENTE")));
+        when(movimientoDao.anular(anyLong(), anyLong(), any())).thenReturn(1);
+
+        movimientoService.anular(9L, "Motivo", CORREO);
+
+        verify(movimientoDao).buscarPorId(9L);
+        verify(movimientoDao).anular(9L, 3L, "Motivo");
+        verifyNoMoreInteractions(movimientoDao);
+        verifyNoMoreInteractions(productoDao);
+        verifyNoMoreInteractions(motivoMovimientoDao);
+    }
+
+    /** Un movimiento anulado debe seguir siendo consultable con sus detalles. */
+    @Test
+    void unMovimientoAnuladoDebeSeguirSiendoConsultable() {
+        Movimiento movimiento = movimientoConEstado("ANULADO");
+        movimiento.setIdMovimiento(9L);
+        when(movimientoDao.buscarPorId(9L)).thenReturn(Optional.of(movimiento));
+        when(movimientoDao.listarDetalles(9L)).thenReturn(List.of(new MovimientoDetalle()));
+
+        Movimiento resultado = movimientoService.obtenerMovimiento(9L);
+
+        assertThat(resultado.getEstado()).isEqualTo("ANULADO");
+        assertThat(resultado.getDetalles()).hasSize(1);
+    }
+
     // ----------------------------------------------------------- auxiliares
 
     private MotivoMovimiento motivo(String tipo) {
@@ -355,6 +542,17 @@ class MovimientoServiceTest {
         producto.setNombre("Dado 2 cm");
         producto.setActivo(true);
         return producto;
+    }
+
+    private Movimiento movimientoConEstado(String estado) {
+        Movimiento movimiento = new Movimiento();
+        movimiento.setIdMovimiento(9L);
+        movimiento.setCodigo("MOV-20260101000000-ABCDEF12");
+        movimiento.setMotivoMovimiento(motivo("ENTRADA"));
+        movimiento.setUsuario(usuario());
+        movimiento.setTipo("ENTRADA");
+        movimiento.setEstado(estado);
+        return movimiento;
     }
 
     private MovimientoDetalleFormDto linea(Long idProducto, String cantidad) {

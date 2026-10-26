@@ -1,0 +1,154 @@
+@startuml backend-movimientos-module
+title Módulo de movimientos de inventario — registro y anulación
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty members
+
+package "Presentación" {
+  class MovimientoController {
+    +listar(...) : String
+    +nuevo(String, Model, RedirectAttributes) : String
+    +crear(...) : String
+    +detalle(Long, Model, RedirectAttributes) : String
+    +anular(...) : String
+  }
+
+  class InventarioController {
+    +listar(Model) : String
+  }
+}
+
+package "Aplicación" {
+  class MovimientoService {
+    +{static} TIPO_ENTRADA : String
+    +{static} TIPO_SALIDA : String
+    +{static} ESTADO_VIGENTE : String
+    +{static} ESTADO_ANULADO : String
+    +listarMovimientos(Long, String, String, String, String) : List<Movimiento>
+    +obtenerMovimiento(Long) : Movimiento
+    +listarMotivosPorTipo(String) : List<MotivoMovimiento>
+    +registrar(MovimientoFormDto, String) : Long
+    +anular(Long, String, String) : void
+    -validarRelaciones(...) : void
+    -validarStockParaSalidas(...) : void
+    -normalizarMotivoAnulacion(String) : String
+  }
+
+  class InventarioService {
+    +listarTodo() : List<Inventario>
+  }
+}
+
+package "Persistencia" {
+  interface MovimientoDao {
+    +listarTodos(...) : List<Movimiento>
+    +buscarPorId(Long) : Optional<Movimiento>
+    +listarDetalles(Long) : List<MovimientoDetalle>
+    +guardar(Movimiento) : Long
+    +guardarDetalle(MovimientoDetalle) : int
+    +anular(Long, Long, String) : int
+  }
+
+  class JdbcMovimientoDao {
+    -jdbcTemplate : JdbcTemplate
+    +guardar(Movimiento) : Long
+    +guardarDetalle(MovimientoDetalle) : int
+    +anular(Long, Long, String) : int
+  }
+
+  interface InventarioDao {
+    +listarTodo() : List<Inventario>
+  }
+
+  interface MotivoMovimientoDao {
+    +buscarPorId(Long) : Optional<MotivoMovimiento>
+  }
+
+  interface ProductoDao {
+    +buscarPorId(Long) : Optional<Producto>
+    +obtenerStockActual(Long) : BigDecimal
+  }
+
+  interface UsuarioDao {
+    +buscarPorCorreo(String) : Optional<Usuario>
+  }
+}
+
+package "Dominio" {
+  class Movimiento {
+    -tipo : String
+    -estado : String
+    -detalles : List<MovimientoDetalle>
+    +getTotalCantidad() : BigDecimal
+  }
+
+  class MovimientoDetalle {
+    -producto : Producto
+    -cantidad : BigDecimal
+    -stockActual : BigDecimal
+  }
+}
+
+package "Base de datos PostgreSQL" <<DB>> {
+  class "trg_movimiento_detalle_\naplicar_inventario" as T1
+  class "trg_movimientos_revertir_\nanulacion" as T2
+  class "inventario" as INV
+}
+
+' ============================================================
+MovimientoController --> MovimientoService
+MovimientoController --> InventarioService
+InventarioController --> InventarioService
+
+MovimientoService --> MovimientoDao
+MovimientoService --> MotivoMovimientoDao
+MovimientoService --> ProductoDao
+MovimientoService --> UsuarioDao
+InventarioService --> InventarioDao
+
+JdbcMovimientoDao ..|> MovimientoDao
+MovimientoDao --> Movimiento
+Movimiento "1" *-- "*" MovimientoDetalle
+
+' ------------------------------------------------------------
+' Flujo de REGISTRO: la base de datos mantiene el stock
+' ------------------------------------------------------------
+MovimientoService -> MovimientoDao : 1. guardar(cabecera)
+MovimientoService -> MovimientoDao : 2. guardarDetalle(línea)\nmisma transacción
+JdbcMovimientoDao -> T1 : BEFORE INSERT\ndispara
+T1 -> INV : SELECT … FOR UPDATE\nvalida saldo y actualiza stock
+
+note bottom of T1
+  **trg_movimiento_detalle_aplicar_inventario**
+  * Bloquea la fila de `inventario` con FOR UPDATE.
+  * Rechaza salidas sin stock suficiente.
+  * Actualiza `stock` según el tipo del movimiento.
+
+  El código Java **nunca** escribe en `inventario`.
+end note
+
+' ------------------------------------------------------------
+' Flujo de ANULACIÓN: reversión única
+' ------------------------------------------------------------
+MovimientoService -> MovimientoDao : anular(id, usuario, motivo)\nUPDATE condicional WHERE estado='VIGENTE'
+JdbcMovimientoDao -> T2 : BEFORE UPDATE OF estado\ndispara
+T2 -> INV : revierte stock una sola vez\nsolo si VIGENTE → ANULADO
+
+note bottom of T2
+  **trg_movimientos_revertir_anulacion**
+  * Solo actúa en la transición VIGENTE → ANULADO.
+  * Bloquea reactivar un movimiento anulado.
+  * Rechaza la anulación si dejaría stock negativo.
+
+  La cláusula `WHERE estado='VIGENTE'` impide
+  la doble anulación y, por tanto, la doble reversión.
+end note
+
+note top of MovimientoService
+  `registrar` y `anular` están anotados con **@Transactional**:
+  cabecera y detalles se escriben de forma atómica y
+  una operación fallida no deja cambios parciales.
+end note
+
+@enduml

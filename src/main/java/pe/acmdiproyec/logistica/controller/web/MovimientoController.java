@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import pe.acmdiproyec.logistica.dto.AnulacionMovimientoFormDto;
 import pe.acmdiproyec.logistica.dto.MovimientoFormDto;
 import pe.acmdiproyec.logistica.exception.RecursoNoEncontradoException;
 import pe.acmdiproyec.logistica.exception.ReglaNegocioException;
@@ -118,7 +119,42 @@ public class MovimientoController {
             redirect.addFlashAttribute("mensajeError", excepcion.getMessage());
             return "redirect:/movimientos";
         }
+        model.addAttribute("anulacion", new AnulacionMovimientoFormDto());
         return VISTA_DETALLE;
+    }
+
+    /**
+     * Anula un movimiento vigente. El usuario responsable se toma de la sesion
+     * autenticada: no se acepta ningun identificador enviado desde el navegador.
+     */
+    @PostMapping("/movimientos/{id}/anular")
+    public String anular(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("anulacion") AnulacionMovimientoFormDto formulario,
+            BindingResult resultado,
+            Model model,
+            Principal principal,
+            RedirectAttributes redirect) {
+
+        if (resultado.hasErrors()) {
+            try {
+                model.addAttribute("movimiento", movimientoService.obtenerMovimiento(id));
+            } catch (RecursoNoEncontradoException excepcion) {
+                redirect.addFlashAttribute("mensajeError", excepcion.getMessage());
+                return "redirect:/movimientos";
+            }
+            return VISTA_DETALLE;
+        }
+        try {
+            movimientoService.anular(id, formulario.getMotivoAnulacion(), principal.getName());
+            redirect.addFlashAttribute("mensajeExito", "Movimiento anulado correctamente.");
+        } catch (ReglaNegocioException excepcion) {
+            redirect.addFlashAttribute("mensajeError", excepcion.getMessage());
+        } catch (RecursoNoEncontradoException excepcion) {
+            redirect.addFlashAttribute("mensajeError", excepcion.getMessage());
+            return "redirect:/movimientos";
+        }
+        return "redirect:/movimientos/" + id;
     }
 
     private void prepararFormulario(Model model, String tipo) {

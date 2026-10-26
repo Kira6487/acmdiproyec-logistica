@@ -1,140 +1,148 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Historial de movimientos de inventario">
-  <title>Movimientos | ACM Diproyec</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('Movimientos de inventario')}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('movimientos')}"></nav>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('movimientos')}"></aside>
 
-<main id="contenido-principal" tabindex="-1">
-  <section class="container" aria-labelledby="page-title">
-    <div class="page-heading">
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
       <div>
-        <p class="eyebrow">Inventario</p>
-        <h1 id="page-title">Movimientos de inventario</h1>
-        <p class="hero-description">
-          Historial de entradas y salidas registradas en el almacén.
-        </p>
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li>Movimientos</li>
+          </ol>
+        </nav>
+        <h1>Movimientos de inventario</h1>
+        <p class="acm-help">Historial de entradas y salidas registradas en el almacén.</p>
       </div>
-      <div>
-        <a class="button button-primary" sec:authorize="hasAnyRole('ADMIN')"
-           th:href="@{/movimientos/nuevo(tipo='ENTRADA')}" href="/movimientos/nuevo">Registrar entrada</a>
-        <a class="button button-secondary" sec:authorize="hasAnyRole('ADMIN')"
-           th:href="@{/movimientos/nuevo(tipo='SALIDA')}" href="/movimientos/nuevo">Registrar salida</a>
+      <div class="acm-actions" sec:authorize="hasAnyRole('ADMIN')">
+        <a class="btn btn-warning" th:href="@{/movimientos/nuevo(tipo='SALIDA')}"
+           href="/movimientos/nuevo">Registrar salida</a>
+        <a class="btn btn-primary" th:href="@{/movimientos/nuevo(tipo='ENTRADA')}"
+           href="/movimientos/nuevo">Registrar entrada</a>
       </div>
-    </div>
+    </header>
 
-    <div class="message message-success" role="status"
-         th:if="${mensajeExito}" th:text="${mensajeExito}"></div>
-    <div class="message message-error" role="alert"
-         th:if="${mensajeError}" th:text="${mensajeError}"></div>
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
 
-    <form class="card filter-container" th:action="@{/movimientos}" method="get">
-      <div class="form-field">
-        <label for="idProducto">Producto</label>
-        <select class="select" id="idProducto" name="idProducto">
-          <option value="">Todos</option>
-          <option th:each="fila : ${productos}"
-                  th:value="${fila.producto.idProducto}"
-                  th:selected="${filtroIdProducto == fila.producto.idProducto}"
-                  th:text="${fila.producto.nombre}">Dado</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label for="tipo">Tipo</label>
-        <select class="select" id="tipo" name="tipo">
-          <option value="">Todos</option>
-          <option th:each="opcion : ${tipos}"
-                  th:value="${opcion}"
-                  th:selected="${filtroTipo == opcion}"
-                  th:text="${opcion}">ENTRADA</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label for="estado">Estado</label>
-        <select class="select" id="estado" name="estado">
-          <option value="">Todos</option>
-          <option th:each="opcion : ${estados}"
-                  th:value="${opcion}"
-                  th:selected="${filtroEstado == opcion}"
-                  th:text="${opcion}">VIGENTE</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label for="desde">Desde</label>
-        <input class="input" type="date" id="desde" name="desde" th:value="${filtroDesde}">
-      </div>
-      <div class="form-field">
-        <label for="hasta">Hasta</label>
-        <input class="input" type="date" id="hasta" name="hasta" th:value="${filtroHasta}">
-      </div>
-      <div class="form-field">
-        <button type="submit" class="button button-primary">Filtrar</button>
-        <a class="button button-secondary" th:href="@{/movimientos}" href="/movimientos">Limpiar</a>
+    <form class="card mb-3" th:action="@{/movimientos}" method="get">
+      <div class="card-body">
+        <div class="acm-filters">
+          <div class="form-field">
+            <label class="form-label" for="idProducto">Producto</label>
+            <select class="form-select" id="idProducto" name="idProducto">
+              <option value="">Todos</option>
+              <option th:each="fila : ${productos}"
+                      th:value="${fila.producto.idProducto}"
+                      th:selected="${filtroIdProducto == fila.producto.idProducto}"
+                      th:text="${fila.producto.nombre}">Producto</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="tipo">Tipo</label>
+            <select class="form-select" id="tipo" name="tipo">
+              <option value="">Todos</option>
+              <option th:each="opcion : ${tipos}" th:value="${opcion}"
+                      th:selected="${filtroTipo == opcion}" th:text="${opcion}">ENTRADA</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="estado">Estado</label>
+            <select class="form-select" id="estado" name="estado">
+              <option value="">Todos</option>
+              <option th:each="opcion : ${estados}" th:value="${opcion}"
+                      th:selected="${filtroEstado == opcion}" th:text="${opcion}">VIGENTE</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="desde">Desde</label>
+            <input class="form-control" type="date" id="desde" name="desde" th:value="${filtroDesde}">
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="hasta">Hasta</label>
+            <input class="form-control" type="date" id="hasta" name="hasta" th:value="${filtroHasta}">
+          </div>
+          <div class="acm-filter-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/movimientos}" href="/movimientos">Limpiar</a>
+          </div>
+        </div>
       </div>
     </form>
 
-    <div class="card" th:if="${!movimientos.isEmpty()}">
-      <div class="table-responsive">
-        <table class="responsive-table">
-          <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Fecha</th>
-            <th scope="col">Tipo</th>
-            <th scope="col">Motivo</th>
-            <th scope="col">Registrado por</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Detalle</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr th:each="movimiento : ${movimientos}">
-            <td th:text="${movimiento.codigo}">MOV-0001</td>
-            <td th:text="${#temporals.format(movimiento.fechaMovimiento, 'dd/MM/yyyy HH:mm')}">01/01/2026 10:00</td>
-            <td>
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive" th:if="${!movimientos.isEmpty()}">
+          <table class="table">
+            <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Motivo</th>
+              <th scope="col">Registrado por</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Detalle</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="movimiento : ${movimientos}">
+              <td th:text="${movimiento.codigo}">MOV-0001</td>
+              <td th:text="${#temporals.format(movimiento.fechaMovimiento, 'dd/MM/yyyy HH:mm')}">
+                01/01/2026 10:00
+              </td>
+              <td>
                 <span class="badge"
-                      th:classappend="${movimiento.tipo == 'ENTRADA'} ? 'badge-success' : 'badge-warning'"
+                      th:classappend="${movimiento.tipo == 'ENTRADA'} ? 'acm-badge-success' : 'acm-badge-warning'"
                       th:text="${movimiento.tipo}">ENTRADA</span>
-            </td>
-            <td th:text="${movimiento.motivoMovimiento.nombre}">Compra</td>
-            <td th:text="${movimiento.usuario.nombres + ' ' + movimiento.usuario.apellidos}">Nombre Apellido</td>
-            <td>
+              </td>
+              <td th:text="${movimiento.motivoMovimiento.nombre}">Compra</td>
+              <td th:text="${movimiento.usuario.nombres + ' ' + movimiento.usuario.apellidos}">
+                Nombre Apellido
+              </td>
+              <td>
                 <span class="badge"
-                      th:classappend="${movimiento.estado == 'VIGENTE'} ? 'badge-success' : 'badge-neutral'"
+                      th:classappend="${movimiento.estado == 'VIGENTE'} ? 'acm-badge-success' : 'acm-badge-neutral'"
                       th:text="${movimiento.estado}">VIGENTE</span>
-            </td>
-            <td>
-              <a class="button button-secondary"
-                 th:href="@{/movimientos/{id}(id=${movimiento.idMovimiento})}"
-                 href="/movimientos/1">Ver detalle</a>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+                <p class="acm-help" th:if="${movimiento.estado == 'ANULADO'}">
+                  Anulado el
+                  <span th:text="${movimiento.fechaAnulacion != null
+                                  ? #temporals.format(movimiento.fechaAnulacion, 'dd/MM/yyyy HH:mm')
+                                  : 'sin fecha'}">01/01/2026</span>
+                  por
+                  <span th:text="${(movimiento.usuarioAnulacion?.nombres ?: '') + ' ' + (movimiento.usuarioAnulacion?.apellidos ?: '')}">
+                    Nombre Apellido
+                  </span>
+                </p>
+                <p class="acm-help" th:if="${movimiento.estado == 'ANULADO'}"
+                   th:text="'Motivo: ' + ${movimiento.motivoAnulacion}">Motivo</p>
+              </td>
+              <td>
+                <a class="btn btn-sm btn-outline-light"
+                   th:href="@{/movimientos/{id}(id=${movimiento.idMovimiento})}"
+                   href="/movimientos/1">Ver detalle</a>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div th:replace="~{fragments/empty-state :: vacio(
+                'No hay movimientos registrados',
+                'Los movimientos registrados aparecerán en este historial.',
+                null,
+                null)}"
+             th:if="${movimientos.isEmpty()}"></div>
+
+        <p class="acm-table-note">
+          Mostrando <span th:text="${#lists.size(movimientos)}">0</span> movimientos.
+        </p>
       </div>
     </div>
-
-    <div class="empty-state card" th:if="${movimientos.isEmpty()}">
-      <h2>No hay movimientos registrados</h2>
-      <p sec:authorize="hasAnyRole('ADMIN')">
-        Registre la primera entrada para comenzar a operar el inventario.
-      </p>
-      <p sec:authorize="hasAnyRole('LOGISTICA')">
-        Todavía no hay movimientos. Un administrador debe registrarlos.
-      </p>
-    </div>
-  </section>
-</main>
-
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+  </main>
+</div>
 </body>
 </html>

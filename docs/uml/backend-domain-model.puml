@@ -1,0 +1,148 @@
+@startuml backend-domain-model
+title Modelo de dominio — Backend ACM Diproyec Logística
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty members
+
+' ============================================================
+' Dominio de datos maestros
+' ============================================================
+class Rol {
+  -idRol : Long
+  -codigo : String
+  -nombre : String
+  -descripcion : String
+  -activo : boolean
+}
+
+class Usuario {
+  -idUsuario : Long
+  -rol : Rol
+  -codigo : String
+  -nombres : String
+  -apellidos : String
+  -correo : String
+  -passwordHash : String
+  -activo : boolean
+  +isActivo() : boolean
+}
+
+class Categoria {
+  -idCategoria : Long
+  -codigo : String
+  -nombre : String
+  -descripcion : String
+  -activo : boolean
+}
+
+class UnidadMedida {
+  -idUnidadMedida : Long
+  -codigo : String
+  -nombre : String
+  -abreviatura : String
+  -activo : boolean
+}
+
+class MotivoMovimiento {
+  +{static} TIPO_ENTRADA : String
+  +{static} TIPO_SALIDA : String
+  -idMotivoMovimiento : Long
+  -codigo : String
+  -nombre : String
+  -tipo : String
+  -descripcion : String
+  -activo : boolean
+}
+
+class Producto {
+  -idProducto : Long
+  -categoria : Categoria
+  -unidadMedida : UnidadMedida
+  -codigo : String
+  -nombre : String
+  -descripcion : String
+  -stockMinimo : BigDecimal
+  -activo : boolean
+}
+
+' ============================================================
+' Dominio de inventario y movimientos
+' ============================================================
+class Inventario {
+  -idInventario : Long
+  -producto : Producto
+  -stock : BigDecimal
+}
+
+class Movimiento {
+  -idMovimiento : Long
+  -codigo : String
+  -motivoMovimiento : MotivoMovimiento
+  -usuario : Usuario
+  -fechaMovimiento : OffsetDateTime
+  -tipo : String
+  -estado : String
+  -observacion : String
+  -usuarioAnulacion : Usuario
+  -fechaAnulacion : OffsetDateTime
+  -motivoAnulacion : String
+  -detalles : List<MovimientoDetalle>
+  +getTotalCantidad() : BigDecimal
+}
+
+class MovimientoDetalle {
+  -idMovimientoDetalle : Long
+  -idMovimiento : Long
+  -producto : Producto
+  -cantidad : BigDecimal
+  -stockActual : BigDecimal
+}
+
+' ============================================================
+' Multiplicidades justificadas por las claves foráneas del esquema
+' ============================================================
+Rol "1" --> "*" Usuario : usuarios.id_rol\n(NOT NULL FK)
+Usuario "1" --> "*" Movimiento : movimientos.id_usuario\nresponsable (NOT NULL FK)
+Usuario "0..1" --> "*" Movimiento : movimientos.id_usuario_anulacion\n(FK nullable)
+MotivoMovimiento "1" --> "*" Movimiento : movimientos.id_motivo_movimiento\n(NOT NULL FK)
+
+Categoria "1" --> "*" Producto : productos.id_categoria\n(NOT NULL FK)
+UnidadMedida "1" --> "*" Producto : productos.id_unidad_medida\n(NOT NULL FK)
+
+Producto "1" --> "0..1" Inventario : inventario.id_producto\n(NOT NULL UNIQUE FK)\nfila creada por trigger
+
+Movimiento "1" *-- "*" MovimientoDetalle : movimiento_detalle.id_movimiento\n(FK NOT NULL, detalle inmutable)
+Producto "1" --> "*" MovimientoDetalle : movimiento_detalle.id_producto\n(NOT NULL FK)
+
+' ============================================================
+' Notas de dominio
+' ============================================================
+note right of MovimientoDetalle
+  **stockActual** no se persiste:
+  se lee de inventario solo para
+  mostrar el efecto del movimiento.
+end note
+
+note bottom of Movimiento
+  El enum de base de datos
+  **estado_movimiento** solo admite
+  `VIGENTE` y `ANULADO`.
+  No existe estado de borrador.
+end note
+
+note top of MotivoMovimiento
+  El enum de base de datos
+  **tipo_movimiento** solo admite
+  `ENTRADA` y `SALIDA`.
+  Se almacena como String en Java.
+end note
+
+note bottom of Inventario
+  **stock** lo mantiene exclusivamente
+  la base de datos mediante triggers.
+  El código Java nunca lo calcula
+  ni lo escribe.
+end note
+
+@enduml

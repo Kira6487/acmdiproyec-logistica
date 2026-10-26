@@ -1,131 +1,122 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Formulario de producto del almacén">
-  <title>Productos | ACM Diproyec</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('Productos')}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('productos')}"></nav>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('productos')}"></aside>
 
-<main id="contenido-principal" tabindex="-1">
-  <section class="container" aria-labelledby="page-title">
-    <div class="page-heading">
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
       <div>
-        <p class="eyebrow">Datos maestros</p>
-        <h1 id="page-title" th:text="${tituloFormulario}">Nuevo producto</h1>
-        <p class="hero-description">
-          Complete los datos del producto. Los campos marcados son obligatorios.
-        </p>
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li><a th:href="@{/productos}" href="/productos">Productos</a></li>
+            <li th:text="${tituloFormulario}">Formulario</li>
+          </ol>
+        </nav>
+        <h1 th:text="${tituloFormulario}">Nuevo producto</h1>
+        <p class="acm-help">Los campos marcados con * son obligatorios.</p>
       </div>
-      <a class="button button-secondary" th:href="@{/productos}" href="/productos">
-        Volver al listado
-      </a>
-    </div>
+      <div class="acm-actions">
+        <a class="btn btn-outline-secondary" th:href="@{/productos}" href="/productos">Volver al listado</a>
+      </div>
+    </header>
 
-    <form class="card form-grid"
-          th:object="${producto}"
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
+
+    <form class="card" th:object="${producto}"
           th:action="${producto.idProducto != null} ? @{/productos/{id}(id=${producto.idProducto})} : @{/productos}"
           method="post">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="alert alert-danger" role="alert"
+                 th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
+          </div>
 
-      <input type="hidden" th:field="*{idProducto}">
+          <input type="hidden" th:field="*{idProducto}">
 
-      <div class="message message-error" role="alert"
-           th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
+          <div class="col-12 col-md-3">
+            <label class="form-label" for="codigo">Código *</label>
+            <input class="form-control" type="text" id="codigo" th:field="*{codigo}"
+                   maxlength="50" autocomplete="off" required>
+            <p class="acm-help">Hasta 50 caracteres.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('codigo')}"
+               th:errors="*{codigo}"></p>
+          </div>
 
-      <div class="form-field">
-        <label for="codigo">Código</label>
-        <input class="input" type="text" id="codigo" th:field="*{codigo}"
-               maxlength="50" autocomplete="off" required>
-        <p class="form-help">Identificador corto del producto. Hasta 50 caracteres.</p>
-        <p class="message message-error" th:if="${#fields.hasErrors('codigo')}"
-           th:errors="*{codigo}"></p>
-      </div>
+          <div class="col-12 col-md-5">
+            <label class="form-label" for="nombre">Nombre *</label>
+            <input class="form-control" type="text" id="nombre" th:field="*{nombre}"
+                   maxlength="150" autocomplete="off" required>
+            <p class="acm-help">Hasta 150 caracteres.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('nombre')}"
+               th:errors="*{nombre}"></p>
+          </div>
 
-      <div class="form-field">
-        <label for="nombre">Nombre</label>
-        <input class="input" type="text" id="nombre" th:field="*{nombre}"
-               maxlength="150" autocomplete="off" required>
-        <p class="form-help">Nombre completo del producto. Hasta 150 caracteres.</p>
-        <p class="message message-error" th:if="${#fields.hasErrors('nombre')}"
-           th:errors="*{nombre}"></p>
-      </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="stockMinimo">Stock mínimo *</label>
+            <input class="form-control" type="number" id="stockMinimo" th:field="*{stockMinimo}"
+                   min="0" step="0.001" inputmode="decimal" required>
+            <p class="acm-help">Nivel mínimo para las alertas. Hasta 3 decimales.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('stockMinimo')}"
+               th:errors="*{stockMinimo}"></p>
+          </div>
 
-      <div class="form-field">
-        <label for="idCategoria">Categoría</label>
-        <select class="select" id="idCategoria" th:field="*{idCategoria}" required>
-          <option value="">Seleccione una categoría</option>
-          <option th:each="categoria : ${categorias}"
-                  th:value="${categoria.idCategoria}"
-                  th:text="${categoria.nombre}">Dados</option>
-        </select>
-        <p class="form-help">
-          Si no existe la categoría que necesita, regístrela primero.
-        </p>
-        <p class="message message-error" th:if="${#fields.hasErrors('idCategoria')}"
-           th:errors="*{idCategoria}"></p>
-      </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="idCategoria">Categoría *</label>
+            <select class="form-select" id="idCategoria" th:field="*{idCategoria}" required>
+              <option value="">Seleccione una categoría</option>
+              <option th:each="categoria : ${categorias}"
+                      th:value="${categoria.idCategoria}"
+                      th:text="${categoria.nombre}">Categoría</option>
+            </select>
+            <p class="acm-help">Si no existe la categoría que necesita, regístrela primero.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('idCategoria')}"
+               th:errors="*{idCategoria}"></p>
+          </div>
 
-      <div class="form-field">
-        <label for="idUnidadMedida">Unidad de medida</label>
-        <select class="select" id="idUnidadMedida" th:field="*{idUnidadMedida}" required>
-          <option value="">Seleccione una unidad</option>
-          <option th:each="unidad : ${unidadesMedida}"
-                  th:value="${unidad.idUnidadMedida}"
-                  th:text="${unidad.nombre + ' (' + unidad.abreviatura + ')'}">Unidad (und)</option>
-        </select>
-        <p class="form-help">
-          Unidad en la que se cuantifica el producto.
-        </p>
-        <p class="message message-error" th:if="${#fields.hasErrors('idUnidadMedida')}"
-           th:errors="*{idUnidadMedida}"></p>
-      </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="idUnidadMedida">Unidad de medida *</label>
+            <select class="form-select" id="idUnidadMedida" th:field="*{idUnidadMedida}" required>
+              <option value="">Seleccione una unidad</option>
+              <option th:each="unidad : ${unidadesMedida}"
+                      th:value="${unidad.idUnidadMedida}"
+                      th:text="${unidad.nombre + ' (' + unidad.abreviatura + ')'}">Unidad</option>
+            </select>
+            <p class="acm-help">Unidad en la que se cuantifica el producto.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('idUnidadMedida')}"
+               th:errors="*{idUnidadMedida}"></p>
+          </div>
 
-      <div class="form-field">
-        <label for="stockMinimo">Stock mínimo</label>
-        <input class="input" type="number" id="stockMinimo" th:field="*{stockMinimo}"
-               min="0" step="0.001" inputmode="decimal">
-        <p class="form-help">
-          Nivel mínimo de existencias para las alertas. Use hasta 3 decimales.
-        </p>
-        <p class="message message-error" th:if="${#fields.hasErrors('stockMinimo')}"
-           th:errors="*{stockMinimo}"></p>
-      </div>
+          <div class="col-12">
+            <label class="form-label" for="descripcion">Descripción</label>
+            <textarea class="form-control" id="descripcion" th:field="*{descripcion}"
+                      maxlength="500" rows="3"></textarea>
+            <p class="acm-help">Opcional. Hasta 500 caracteres.</p>
+            <p class="alert alert-danger" th:if="${#fields.hasErrors('descripcion')}"
+               th:errors="*{descripcion}"></p>
+          </div>
 
-      <div class="form-field">
-        <label for="descripcion">Descripción</label>
-        <textarea class="textarea" id="descripcion" th:field="*{descripcion}"
-                  maxlength="500" rows="3"></textarea>
-        <p class="form-help">Opcional. Hasta 500 caracteres.</p>
-        <p class="message message-error" th:if="${#fields.hasErrors('descripcion')}"
-           th:errors="*{descripcion}"></p>
-      </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="activo">Estado</label>
+            <select class="form-select" id="activo" th:field="*{activo}">
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+            <p class="acm-help">Un producto inactivo no se ofrecerá al registrar movimientos.</p>
+          </div>
 
-      <div class="form-field" sec:authorize="hasAnyRole('ADMIN')">
-        <label for="activo">Estado</label>
-        <select class="select" id="activo" th:field="*{activo}">
-          <option value="true">Activo</option>
-          <option value="false">Inactivo</option>
-        </select>
-        <p class="form-help">
-          Un producto inactivo no se ofrecerá al registrar movimientos.
-        </p>
-      </div>
-
-      <div class="form-field">
-        <button type="submit" class="button button-primary">Guardar</button>
-        <a class="button button-secondary" th:href="@{/productos}" href="/productos">Cancelar</a>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/productos}" href="/productos">Cancelar</a>
+          </div>
+        </div>
       </div>
     </form>
-  </section>
-</main>
-
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+  </main>
+</div>
 </body>
 </html>

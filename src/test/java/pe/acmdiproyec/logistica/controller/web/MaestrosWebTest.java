@@ -3,6 +3,7 @@ package pe.acmdiproyec.logistica.controller.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -662,12 +663,280 @@ class MaestrosWebTest {
     @Test
     void ambosRolesPuedenConsultarElInventario() throws Exception {
         when(inventarioDao.listarTodo()).thenReturn(List.of(inventario()));
+        when(categoriaDao.listarTodas()).thenReturn(List.of(categoria(1L, "DADOS", "Dados")));
 
         String comoAdmin = contenido(get("/inventario").session(iniciarSesion(CORREO_ADMIN)));
         String comoLogistica = contenido(get("/inventario").session(iniciarSesion(CORREO_LOGISTICA)));
 
         assertThat(comoAdmin).contains("Existencias actuales");
         assertThat(comoLogistica).contains("Existencias actuales");
+    }
+
+    // ------------------------------------------------- anulacion de movimientos
+
+    @Test
+    void elDetalleDeUnMovimientoVigenteMuestraLaAccionDeAnular() throws Exception {
+        when(movimientoDao.buscarPorId(1L)).thenReturn(Optional.of(movimiento()));
+        when(movimientoDao.listarDetalles(1L)).thenReturn(List.of());
+
+        String html = contenido(get("/movimientos/1").session(iniciarSesion(CORREO_ADMIN)));
+
+        assertThat(html).contains("Anular movimiento").contains("Motivo de la anulación");
+    }
+
+    @Test
+    void elDetalleDeUnMovimientoAnuladoNoPermiteAnularDeNuevo() throws Exception {
+        Movimiento anulado = movimiento();
+        anulado.setEstado("ANULADO");
+        anulado.setFechaAnulacion(java.time.OffsetDateTime.now());
+        anulado.setMotivoAnulacion("Error de captura");
+        anulado.setUsuarioAnulacion(usuario(CORREO_ADMIN, CORREO_ADMIN));
+        when(movimientoDao.buscarPorId(1L)).thenReturn(Optional.of(anulado));
+        when(movimientoDao.listarDetalles(1L)).thenReturn(List.of());
+
+        String html = contenido(get("/movimientos/1").session(iniciarSesion(CORREO_ADMIN)));
+
+        assertThat(html).doesNotContain("Anular movimiento");
+    }
+
+    @Test
+    void logisticaNoPuedeAnularMovimientos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(post("/movimientos/1/anular").session(sesion)
+                        .principal(() -> CORREO_LOGISTICA)
+                        .param("motivoAnulacion", "Motivo")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isForbidden());
+        verify(movimientoDao, never()).anular(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void adminPuedeAnularUnMovimiento() throws Exception {
+        when(movimientoDao.buscarPorId(1L)).thenReturn(Optional.of(movimiento()));
+        when(movimientoDao.anular(1L, 1L, "Error de captura")).thenReturn(1);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(post("/movimientos/1/anular").session(sesion)
+                        .principal(() -> CORREO_ADMIN)
+                        .param("motivoAnulacion", "Error de captura")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/movimientos/1"));
+
+        verify(movimientoDao).anular(1L, 1L, "Error de captura");
+    }
+
+    @Test
+    void laAnulacionSinMotivoMuestraLosErroresDeValidacion() throws Exception {
+        when(movimientoDao.buscarPorId(1L)).thenReturn(Optional.of(movimiento()));
+        when(movimientoDao.listarDetalles(1L)).thenReturn(List.of());
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/movimientos/1/anular").session(sesion)
+                        .principal(() -> CORREO_ADMIN)
+                        .param("motivoAnulacion", "   ")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("movimientos/detalle"))
+                .andReturn();
+
+        assertThat(resultado.getResponse().getContentAsString())
+                .contains("El motivo de la anulacion es obligatorio.");
+        verify(movimientoDao, never()).anular(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void laAnulacionRequiereTokenCsrf() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(post("/movimientos/1/anular").session(sesion)
+                        .principal(() -> CORREO_ADMIN)
+                        .param("motivoAnulacion", "Motivo"))
+                .andExpect(status().isForbidden());
+        verify(movimientoDao, never()).anular(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void unaAnulacionYaHechaMuestraUnMensajeDeError() throws Exception {
+        when(movimientoDao.buscarPorId(1L)).thenReturn(Optional.of(movimiento()));
+        when(movimientoDao.anular(anyLong(), anyLong(), any())).thenReturn(0);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/movimientos/1/anular").session(sesion)
+                        .principal(() -> CORREO_ADMIN)
+                        .param("motivoAnulacion", "Motivo")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/movimientos/1"))
+                .andReturn();
+
+        assertThat(mensajeDeError(resultado)).contains("dos veces");
+    }
+
+    @Test
+    void elHistorialMuestraLosDatosDeLaAnulacion() throws Exception {
+        Movimiento anulado = movimiento();
+        anulado.setEstado("ANULADO");
+        anulado.setFechaAnulacion(java.time.OffsetDateTime.now());
+        anulado.setMotivoAnulacion("Error de captura");
+        anulado.setUsuarioAnulacion(usuario(CORREO_ADMIN, CORREO_ADMIN));
+        when(movimientoDao.listarTodos(any(), any(), any(), any(), any()))
+                .thenReturn(List.of(anulado));
+
+        String html = contenido(get("/movimientos").session(iniciarSesion(CORREO_ADMIN)));
+
+        assertThat(html).contains("Anulado el").contains("Error de captura");
+    }
+
+    @Test
+    void losFiltrosPorEstadoSiguenFuncionando() throws Exception {
+        when(movimientoDao.listarTodos(any(), any(), any(), any(), any()))
+                .thenReturn(List.of(movimiento()));
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(get("/movimientos").session(sesion).param("estado", "ANULADO"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("movimientos/lista"));
+
+        verify(movimientoDao).listarTodos(any(), any(), eq("ANULADO"), any(), any());
+    }
+
+    // --------------------------------------------- modulo motivos de movimiento
+
+    @Test
+    void adminPuedeVerElListadoDeMotivos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(get("/motivos").session(sesion))
+                .andExpect(status().isOk())
+                .andExpect(view().name("maestros/motivos/lista"));
+    }
+
+    @Test
+    void logisticaPuedeVerElListadoDeMotivos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(get("/motivos").session(sesion)).andExpect(status().isOk());
+    }
+
+    @Test
+    void logisticaNoPuedeModificarMotivos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(get("/motivos/nuevo").session(sesion)).andExpect(status().isForbidden());
+        mockMvc.perform(post("/motivos").session(sesion).param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/motivos/1/eliminar").session(sesion).param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isForbidden());
+        verify(motivoMovimientoDao, never()).guardar(any());
+    }
+
+    @Test
+    void adminPuedeCrearUnMotivo() throws Exception {
+        when(motivoMovimientoDao.guardar(any())).thenReturn(1);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(post("/motivos").session(sesion)
+                        .param("codigo", "ENTRADA_COMPRA")
+                        .param("nombre", "Compra")
+                        .param("tipo", "ENTRADA")
+                        .param("descripcion", "Ingreso por compra")
+                        .param("activo", "true")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/motivos"));
+
+        verify(motivoMovimientoDao).guardar(any());
+    }
+
+    @Test
+    void elFormularioDeMotivoMuestraLosErroresDeValidacion() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/motivos").session(sesion)
+                        .param("codigo", "   ")
+                        .param("nombre", "")
+                        .param("tipo", "OTRO")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("maestros/motivos/formulario"))
+                .andReturn();
+
+        String html = resultado.getResponse().getContentAsString();
+        assertThat(html).contains("El codigo es obligatorio.");
+        assertThat(html).contains("El nombre es obligatorio.");
+        verify(motivoMovimientoDao, never()).guardar(any());
+    }
+
+    @Test
+    void laEliminacionDeMotivoBloqueadaMuestraUnMensaje() throws Exception {
+        when(motivoMovimientoDao.buscarPorId(1L)).thenReturn(Optional.of(motivoMovimiento()));
+        when(motivoMovimientoDao.contarMovimientosAsociados(1L)).thenReturn(5L);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/motivos/1/eliminar").session(sesion)
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/motivos"))
+                .andReturn();
+
+        assertThat(mensajeDeError(resultado)).contains("movimientos registrados");
+        verify(motivoMovimientoDao, never()).eliminar(anyLong());
+    }
+
+    @Test
+    void elMotivoInexistenteRedirigeConMensaje() throws Exception {
+        when(motivoMovimientoDao.buscarPorId(99L)).thenReturn(Optional.empty());
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(get("/motivos/99/editar").session(sesion))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/motivos"))
+                .andReturn();
+
+        assertThat(mensajeDeError(resultado)).contains("no existe");
+    }
+
+    @Test
+    void elListadoDeMotivosOcultaLasAccionesALaLogistica() throws Exception {
+        when(motivoMovimientoDao.listarTodos()).thenReturn(List.of(motivoMovimiento()));
+
+        String comoAdmin = contenido(get("/motivos").session(iniciarSesion(CORREO_ADMIN)));
+        String comoLogistica = contenido(get("/motivos").session(iniciarSesion(CORREO_LOGISTICA)));
+
+        assertThat(comoAdmin).contains("Editar").contains("Eliminar").contains("Nuevo motivo");
+        assertThat(comoLogistica)
+                .doesNotContain("Editar")
+                .doesNotContain("Eliminar")
+                .doesNotContain("Nuevo motivo");
+    }
+
+    // ------------------------------------------- manejo de errores del servidor
+
+    @Test
+    void unaRutaInexistenteDebeResponderNotFoundYNo500() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(get("/ruta-que-no-existe").session(sesion))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unIdentificadorMalFormadoEnLaRutaDebeResponderBadRequest() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(get("/movimientos/abc").session(sesion))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void unParametroObligatorioAusenteDebeResponderBadRequest() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        // /movimientos/nuevo exige el parametro "tipo".
+        mockMvc.perform(get("/movimientos/nuevo").session(sesion))
+                .andExpect(status().isBadRequest());
     }
 
     // ----------------------------------------------------------- auxiliares

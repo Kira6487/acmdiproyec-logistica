@@ -354,6 +354,11 @@ class SeguridadRolesTest {
                 .thenReturn(Optional.of(usuario("LOGISTICA", CORREO_LOGISTICA, true)));
         when(usuarioDao.listarTodos()).thenReturn(List.of());
         when(usuarioDao.listarRolesActivos()).thenReturn(List.of());
+        // El panel logistico consulta productos, inventario y movimientos.
+        when(productoDao.listarTodos()).thenReturn(List.of());
+        when(inventarioDao.listarTodo()).thenReturn(List.of());
+        when(movimientoDao.listarTodos(null, null, null, null, null)).thenReturn(List.of());
+        when(categoriaDao.listarTodas()).thenReturn(List.of());
     }
 
     private Usuario usuario(String codigoRol, String correo, boolean activo) {

@@ -1,90 +1,86 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Mantenimiento de categorías de productos del almacén">
-  <title>Categorías | ACM Diproyec</title>
-  <link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-  <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
-  <script th:src="@{/js/app.js}" src="/js/app.js" defer></script>
-</head>
+<head th:replace="~{fragments/head :: head('Categorías')}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
-<nav th:replace="~{fragments/navigation :: navigation('categorias')}"></nav>
+<div class="acm-app">
+  <aside th:replace="~{fragments/sidebar :: sidebar('categorias')}"></aside>
 
-<main id="contenido-principal" tabindex="-1">
-  <section class="container" aria-labelledby="page-title">
-    <div class="page-heading">
+  <main class="acm-main" id="contenido-principal" tabindex="-1">
+    <header class="acm-topbar">
       <div>
-        <p class="eyebrow">Datos maestros</p>
-        <h1 id="page-title">Categorías de productos</h1>
-        <p class="hero-description">
+        <nav class="acm-breadcrumb" aria-label="Ruta de navegación">
+          <ol>
+            <li><a th:href="@{/panel}" href="/panel">Panel</a></li>
+            <li>Datos maestros</li>
+            <li>Categorías</li>
+          </ol>
+        </nav>
+        <h1>Categorías de productos</h1>
+        <p class="acm-help">
           Agrupan los productos del almacén y se usan al registrar cada producto.
         </p>
       </div>
-      <a class="button button-primary" sec:authorize="hasAnyRole('ADMIN')"
-         th:href="@{/categorias/nuevo}" href="/categorias/nuevo">Nueva categoría</a>
-    </div>
+      <div class="acm-actions" sec:authorize="hasAnyRole('ADMIN')">
+        <a class="btn btn-primary" th:href="@{/categorias/nuevo}" href="/categorias/nuevo">Nueva categoría</a>
+      </div>
+    </header>
 
-    <div class="message message-success" role="status"
-         th:if="${mensajeExito}" th:text="${mensajeExito}"></div>
-    <div class="message message-error" role="alert"
-         th:if="${mensajeError}" th:text="${mensajeError}"></div>
+    <div th:replace="~{fragments/alerts :: alertas}"></div>
 
-    <div class="card" th:if="${!categorias.isEmpty()}">
-      <div class="table-responsive">
-        <table class="responsive-table">
-          <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Nombre</th>
-            <th scope="col">Descripción</th>
-            <th scope="col">Estado</th>
-            <th scope="col" sec:authorize="hasAnyRole('ADMIN')">Acciones</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr th:each="categoria : ${categorias}">
-            <td th:text="${categoria.codigo}">DADOS</td>
-            <td th:text="${categoria.nombre}">Dados de concreto</td>
-            <td th:text="${categoria.descripcion} ?: 'Sin descripción'">Sin descripción</td>
-            <td>
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive" th:if="${!categorias.isEmpty()}">
+          <table class="table">
+            <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Descripción</th>
+              <th scope="col">Estado</th>
+              <th scope="col" sec:authorize="hasAnyRole('ADMIN')">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="categoria : ${categorias}">
+              <td th:text="${categoria.codigo}">DADOS</td>
+              <td th:text="${categoria.nombre}">Dados de concreto</td>
+              <td th:text="${categoria.descripcion} ?: 'Sin descripción'">Sin descripción</td>
+              <td>
                 <span class="badge"
-                      th:classappend="${categoria.activo} ? 'badge-success' : 'badge-neutral'"
+                      th:classappend="${categoria.activo} ? 'acm-badge-success' : 'acm-badge-neutral'"
                       th:text="${categoria.activo} ? 'Activa' : 'Inactiva'">Activa</span>
-            </td>
-            <td sec:authorize="hasAnyRole('ADMIN')">
-              <a class="button button-secondary"
-                 th:href="@{/categorias/{id}/editar(id=${categoria.idCategoria})}"
-                 href="/categorias/1/editar">Editar</a>
-              <form class="form-inline" method="post"
-                    th:action="@{/categorias/{id}/eliminar(id=${categoria.idCategoria})}"
-                    onsubmit="return confirm('¿Eliminar esta categoría? Esta acción no se puede deshacer.');">
-                <button type="submit" class="button button-danger">Eliminar</button>
-              </form>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+              </td>
+              <td sec:authorize="hasAnyRole('ADMIN')">
+                <div class="acm-table-actions">
+                  <a class="btn btn-sm btn-outline-light"
+                     th:href="@{/categorias/{id}/editar(id=${categoria.idCategoria})}"
+                     href="/categorias/1/editar">Editar</a>
+                  <form th:action="@{/categorias/{id}/eliminar(id=${categoria.idCategoria})}"
+                        method="post"
+                        onsubmit="return confirm('¿Eliminar esta categoría? Esta acción no se puede deshacer.');">
+                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div th:replace="~{fragments/empty-state :: vacio(
+                'No hay categorías registradas',
+                'Aún no hay categorías disponibles en el sistema.',
+                @{/categorias/nuevo},
+                'Registrar categoría')}"
+             th:if="${categorias.isEmpty()}"></div>
+
+        <p class="acm-table-note">
+          Mostrando <span th:text="${#lists.size(categorias)}">0</span> categorías.
+        </p>
       </div>
     </div>
-
-    <div class="empty-state card" th:if="${categorias.isEmpty()}">
-      <h2>No hay categorías registradas</h2>
-      <p sec:authorize="hasAnyRole('ADMIN')">
-        Registre la primera categoría para poder asociar productos a ella.
-      </p>
-      <p sec:authorize="hasAnyRole('LOGISTICA')">
-        Todavía no hay categorías disponibles. Un administrador debe registrarlas.
-      </p>
-      <a class="button button-primary" sec:authorize="hasAnyRole('ADMIN')"
-         th:href="@{/categorias/nuevo}" href="/categorias/nuevo">Registrar categoría</a>
-    </div>
-  </section>
-</main>
-
-<footer th:replace="~{fragments/footer :: footer}"></footer>
+  </main>
+</div>
 </body>
 </html>
