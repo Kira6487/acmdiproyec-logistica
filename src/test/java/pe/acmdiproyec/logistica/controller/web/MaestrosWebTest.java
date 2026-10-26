@@ -31,9 +31,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import pe.acmdiproyec.logistica.dao.CategoriaDao;
+import pe.acmdiproyec.logistica.dao.ProductoDao;
 import pe.acmdiproyec.logistica.dao.UnidadMedidaDao;
 import pe.acmdiproyec.logistica.dao.UsuarioDao;
 import pe.acmdiproyec.logistica.model.Categoria;
+import pe.acmdiproyec.logistica.model.Producto;
 import pe.acmdiproyec.logistica.model.Rol;
 import pe.acmdiproyec.logistica.model.UnidadMedida;
 import pe.acmdiproyec.logistica.model.Usuario;
@@ -67,6 +69,9 @@ class MaestrosWebTest {
 
     @MockitoBean
     private UnidadMedidaDao unidadMedidaDao;
+
+    @MockitoBean
+    private ProductoDao productoDao;
 
     @BeforeEach
     void preparar() {
@@ -305,6 +310,224 @@ class MaestrosWebTest {
         assertThat(mensajeDeError(resultado)).contains("no existe");
     }
 
+    // ------------------------------------------------------- modulo productos
+
+    @Test
+    void adminPuedeVerElListadoDeProductos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(get("/productos").session(sesion))
+                .andExpect(status().isOk())
+                .andExpect(view().name("maestros/productos/lista"));
+    }
+
+    @Test
+    void logisticaPuedeVerElListadoDeProductos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(get("/productos").session(sesion)).andExpect(status().isOk());
+    }
+
+    @Test
+    void losAnonimosSonRedirigidosAlLoginEnProductos() throws Exception {
+        mockMvc.perform(get("/productos"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test
+    void logisticaNoPuedeAccederAFormulariosDeProductos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(get("/productos/nuevo").session(sesion)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/productos/1/editar").session(sesion)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void logisticaNoPuedeModificarProductos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_LOGISTICA);
+
+        mockMvc.perform(post("/productos").session(sesion).param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/productos/1").session(sesion).param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/productos/1/eliminar").session(sesion).param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isForbidden());
+        verify(productoDao, never()).guardar(any());
+    }
+
+    @Test
+    void adminPuedeCrearUnProducto() throws Exception {
+        prepararRelaciones();
+        when(productoDao.guardar(any(Producto.class))).thenReturn(1);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(post("/productos").session(sesion)
+                        .param("codigo", "DADO-2CM")
+                        .param("nombre", "Dado separador de 2 cm")
+                        .param("idCategoria", "1")
+                        .param("idUnidadMedida", "1")
+                        .param("stockMinimo", "20.000")
+                        .param("descripcion", "Prefabricado")
+                        .param("activo", "true")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/productos"));
+
+        verify(productoDao).guardar(any(Producto.class));
+    }
+
+    @Test
+    void adminPuedeActualizarUnProducto() throws Exception {
+        prepararRelaciones();
+        when(productoDao.buscarPorId(1L)).thenReturn(Optional.of(producto(1L)));
+        when(productoDao.actualizar(any(Producto.class))).thenReturn(1);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(post("/productos/1").session(sesion)
+                        .param("codigo", "DADO-3CM")
+                        .param("nombre", "Dado separador de 3 cm")
+                        .param("idCategoria", "1")
+                        .param("idUnidadMedida", "1")
+                        .param("stockMinimo", "15.000")
+                        .param("activo", "true")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/productos"));
+
+        verify(productoDao).actualizar(any(Producto.class));
+    }
+
+    @Test
+    void adminPuedeEliminarUnProducto() throws Exception {
+        when(productoDao.buscarPorId(1L)).thenReturn(Optional.of(producto(1L)));
+        when(productoDao.contarMovimientosAsociados(1L)).thenReturn(0L);
+        when(productoDao.obtenerStockActual(1L)).thenReturn(java.math.BigDecimal.ZERO);
+        when(productoDao.eliminar(1L)).thenReturn(1);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        mockMvc.perform(post("/productos/1/eliminar").session(sesion)
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/productos"));
+
+        verify(productoDao).eliminar(1L);
+    }
+
+    @Test
+    void elFormularioDeProductoMuestraLosErroresDeValidacion() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/productos").session(sesion)
+                        .param("codigo", "   ")
+                        .param("nombre", "")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("maestros/productos/formulario"))
+                .andReturn();
+
+        String html = resultado.getResponse().getContentAsString();
+        assertThat(html).contains("El codigo es obligatorio.");
+        assertThat(html).contains("El nombre es obligatorio.");
+        assertThat(html).contains("La categoria es obligatoria.");
+        assertThat(html).contains("La unidad de medida es obligatoria.");
+        verify(productoDao, never()).guardar(any());
+    }
+
+    @Test
+    void elFormularioDeProductoTraduceValoresNumericosInvalidos() throws Exception {
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/productos").session(sesion)
+                        .param("codigo", "DADO-2CM")
+                        .param("nombre", "Dado separador de 2 cm")
+                        .param("idCategoria", "1")
+                        .param("idUnidadMedida", "1")
+                        .param("stockMinimo", "no-es-un-numero")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("maestros/productos/formulario"))
+                .andReturn();
+
+        assertThat(resultado.getResponse().getContentAsString()).contains("El stock minimo");
+        verify(productoDao, never()).guardar(any());
+    }
+
+    @Test
+    void elFormularioDeProductoRechazaUnaCategoriaInexistente() throws Exception {
+        prepararRelaciones();
+        when(categoriaDao.buscarPorId(1L)).thenReturn(Optional.empty());
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/productos").session(sesion)
+                        .param("codigo", "DADO-2CM")
+                        .param("nombre", "Dado separador de 2 cm")
+                        .param("idCategoria", "1")
+                        .param("idUnidadMedida", "1")
+                        .param("stockMinimo", "20.000")
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("maestros/productos/formulario"))
+                .andReturn();
+
+        assertThat(resultado.getResponse().getContentAsString()).contains("La categoria indicada no existe.");
+        verify(productoDao, never()).guardar(any());
+    }
+
+    @Test
+    void laEliminacionDeProductoBloqueadaMuestraUnMensaje() throws Exception {
+        when(productoDao.buscarPorId(1L)).thenReturn(Optional.of(producto(1L)));
+        when(productoDao.contarMovimientosAsociados(1L)).thenReturn(3L);
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(post("/productos/1/eliminar").session(sesion)
+                        .param("_csrf", obtenerTokenCsrf(sesion)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/productos"))
+                .andReturn();
+
+        assertThat(mensajeDeError(resultado)).contains("movimientos registrados");
+        verify(productoDao, never()).eliminar(anyLong());
+    }
+
+    @Test
+    void elProductoInexistenteRedirigeConMensaje() throws Exception {
+        when(productoDao.buscarPorId(99L)).thenReturn(Optional.empty());
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        MvcResult resultado = mockMvc.perform(get("/productos/99/editar").session(sesion))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/productos"))
+                .andReturn();
+
+        assertThat(mensajeDeError(resultado)).contains("no existe");
+    }
+
+    @Test
+    void elListadoDeProductosOcultaLasAccionesALaLogistica() throws Exception {
+        when(productoDao.listarTodos()).thenReturn(List.of(producto(1L)));
+
+        String comoAdmin = contenido(get("/productos").session(iniciarSesion(CORREO_ADMIN)));
+        String comoLogistica = contenido(get("/productos").session(iniciarSesion(CORREO_LOGISTICA)));
+
+        assertThat(comoAdmin).contains("Editar").contains("Eliminar").contains("Nuevo producto");
+        assertThat(comoLogistica)
+                .doesNotContain("Editar")
+                .doesNotContain("Eliminar")
+                .doesNotContain("Nuevo producto");
+    }
+
+    @Test
+    void elFormularioDeProductoOfreceLasCategoriasYLasUnidades() throws Exception {
+        prepararRelaciones();
+        MockHttpSession sesion = iniciarSesion(CORREO_ADMIN);
+
+        String html = contenido(get("/productos/nuevo").session(sesion));
+
+        assertThat(html).contains("Seleccione una categoría");
+        assertThat(html).contains("Seleccione una unidad");
+    }
+
     // ----------------------------------------------------------- auxiliares
 
     private String contenido(org.springframework.test.web.servlet.RequestBuilder solicitud) throws Exception {
@@ -345,6 +568,38 @@ class MaestrosWebTest {
         categoria.setNombre(nombre);
         categoria.setActivo(true);
         return categoria;
+    }
+
+    /** Carga categorias y unidades de medida disponibles para los desplegables. */
+    private void prepararRelaciones() {
+        when(categoriaDao.listarTodas())
+                .thenReturn(List.of(categoria(1L, "DADOS", "Dados")));
+        when(unidadMedidaDao.listarTodas())
+                .thenReturn(List.of(unidad(1L, "UNIDAD", "Unidad", "und")));
+        when(categoriaDao.buscarPorId(1L)).thenReturn(Optional.of(categoria(1L, "DADOS", "Dados")));
+        when(unidadMedidaDao.buscarPorId(1L)).thenReturn(Optional.of(unidad(1L, "UNIDAD", "Unidad", "und")));
+    }
+
+    private UnidadMedida unidad(Long id, String codigo, String nombre, String abreviatura) {
+        UnidadMedida unidadMedida = new UnidadMedida();
+        unidadMedida.setIdUnidadMedida(id);
+        unidadMedida.setCodigo(codigo);
+        unidadMedida.setNombre(nombre);
+        unidadMedida.setAbreviatura(abreviatura);
+        unidadMedida.setActivo(true);
+        return unidadMedida;
+    }
+
+    private Producto producto(Long id) {
+        Producto producto = new Producto();
+        producto.setIdProducto(id);
+        producto.setCategoria(categoria(1L, "DADOS", "Dados"));
+        producto.setUnidadMedida(unidad(1L, "UNIDAD", "Unidad", "und"));
+        producto.setCodigo("DADO-2CM");
+        producto.setNombre("Dado separador de 2 cm");
+        producto.setStockMinimo(new java.math.BigDecimal("20.000"));
+        producto.setActivo(true);
+        return producto;
     }
 
     private Usuario usuario(String codigoRol, String correo) {

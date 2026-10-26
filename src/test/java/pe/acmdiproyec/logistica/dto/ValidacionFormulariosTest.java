@@ -134,6 +134,87 @@ class ValidacionFormulariosTest {
         assertThat(camposConError(validador.validate(formulario))).contains("nombre");
     }
 
+    // ------------------------------------------------------------- productos
+
+    @Test
+    void productoValidoNoTieneViolaciones() {
+        ProductoFormDto formulario = new ProductoFormDto();
+        formulario.setIdCategoria(1L);
+        formulario.setIdUnidadMedida(2L);
+        formulario.setCodigo("DADO-2CM");
+        formulario.setNombre("Dado separador de 2 cm");
+        formulario.setDescripcion("Prefabricado de concreto");
+        formulario.setStockMinimo(new java.math.BigDecimal("20.000"));
+
+        assertThat(validador.validate(formulario)).isEmpty();
+    }
+
+    @Test
+    void productoRechazaCamposObligatoriosVacios() {
+        ProductoFormDto formulario = new ProductoFormDto();
+        formulario.setIdCategoria(null);
+        formulario.setIdUnidadMedida(null);
+        formulario.setCodigo("   ");
+        formulario.setNombre("");
+        formulario.setStockMinimo(null);
+
+        Set<ConstraintViolation<ProductoFormDto>> violaciones = validador.validate(formulario);
+
+        assertThat(camposConError(violaciones))
+                .containsExactlyInAnyOrder(
+                        "idCategoria", "idUnidadMedida", "codigo", "nombre", "stockMinimo");
+    }
+
+    @Test
+    void productoRechazaCodigosMayoresDe50Caracteres() {
+        ProductoFormDto formulario = productoValido();
+        formulario.setCodigo("X".repeat(51));
+
+        assertThat(camposConError(validador.validate(formulario))).contains("codigo");
+    }
+
+    @Test
+    void productoRechazaNombresMayoresDe150Caracteres() {
+        ProductoFormDto formulario = productoValido();
+        formulario.setNombre("X".repeat(151));
+
+        assertThat(camposConError(validador.validate(formulario))).contains("nombre");
+    }
+
+    @Test
+    void productoRechazaDescripcionesMayoresDe500Caracteres() {
+        ProductoFormDto formulario = productoValido();
+        formulario.setDescripcion("X".repeat(501));
+
+        assertThat(camposConError(validador.validate(formulario))).contains("descripcion");
+    }
+
+    @Test
+    void productoRechazaStockMinimoNegativo() {
+        ProductoFormDto formulario = productoValido();
+        formulario.setStockMinimo(new java.math.BigDecimal("-0.001"));
+
+        assertThat(camposConError(validador.validate(formulario))).contains("stockMinimo");
+    }
+
+    @Test
+    void productoRechazaStockMinimoConDemasiadosDecimales() {
+        ProductoFormDto formulario = productoValido();
+        formulario.setStockMinimo(new java.math.BigDecimal("1.2345"));
+
+        assertThat(camposConError(validador.validate(formulario))).contains("stockMinimo");
+    }
+
+    private ProductoFormDto productoValido() {
+        ProductoFormDto formulario = new ProductoFormDto();
+        formulario.setIdCategoria(1L);
+        formulario.setIdUnidadMedida(2L);
+        formulario.setCodigo("DADO-2CM");
+        formulario.setNombre("Dado separador de 2 cm");
+        formulario.setStockMinimo(new java.math.BigDecimal("20.000"));
+        return formulario;
+    }
+
     private <T> Set<String> camposConError(Set<ConstraintViolation<T>> violaciones) {
         return violaciones.stream()
                 .map(violacion -> violacion.getPropertyPath().toString())

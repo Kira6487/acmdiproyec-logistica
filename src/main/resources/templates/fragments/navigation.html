@@ -25,6 +25,10 @@
          th:attr="aria-current=${seccionActiva == 'unidades'} ? 'page' : null">
         Unidades de medida
       </a>
+      <a th:href="@{/productos}" href="/productos" sec:authorize="isAuthenticated()"
+         th:attr="aria-current=${seccionActiva == 'productos'} ? 'page' : null">
+        Productos
+      </a>
     </div>
   </div>
 </nav>

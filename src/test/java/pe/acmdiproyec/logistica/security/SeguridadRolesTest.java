@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.mock.web.MockHttpSession;
 
 import pe.acmdiproyec.logistica.dao.CategoriaDao;
+import pe.acmdiproyec.logistica.dao.ProductoDao;
 import pe.acmdiproyec.logistica.dao.UnidadMedidaDao;
 import pe.acmdiproyec.logistica.dao.UsuarioDao;
 import pe.acmdiproyec.logistica.model.Rol;
@@ -75,6 +76,9 @@ class SeguridadRolesTest {
 
     @MockitoBean
     private UnidadMedidaDao unidadMedidaDao;
+
+    @MockitoBean
+    private ProductoDao productoDao;
 
     // ---------------------------------------------------------------
     // 1. La configuración reconoce el rol ADMIN como ROLE_ADMIN
